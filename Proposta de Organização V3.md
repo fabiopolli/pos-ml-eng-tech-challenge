@@ -2,17 +2,19 @@
 **Projeto:** Rede Neural para Previsão de Churn com Pipeline Profissional End-to-End
 **Estrutura:** 4 Integrantes | 4 Fases (0 a 3)
 
+## Entregas toda a segunda, reunião para consolidação de informações.
+
 ---
 
 ### 🗓️ Fase 0: Setup e Alinhamento de Negócio (Semana 0 - 3 dias)
 **Dinâmica:** Estabelecer a infraestrutura de desenvolvimento e os requisitos de negócio para assegurar a padronização entre os membros.
 **Ferramentas:** GitHub, Python 3.10+, `pyproject.toml`, ML Canvas.
 
-* **Integrante 1 (Infraestrutura):** Criar o repositório institucional no GitHub com a estrutura de diretórios obrigatória: `src/`, `data/`, `models/`, `tests/`, `notebooks/` e `docs/`.
-* **Integrante 2 (Ambiente e Reprodutibilidade):** Configurar o `pyproject.toml` como única fonte de verdade para dependências e linting. Estabelecer a fixação de *seeds* globais para assegurar a reprodutibilidade dos experimentos.
-* **Integrante 3 (Definição de Negócio):** Selecionar o dataset (mínimo de 5.000 registros e 10 features) e iniciar o preenchimento do **ML Canvas**, focando em stakeholders e proposta de valor.
-* **Integrante 4 (Métricas e Governança):** Finalizar o **ML Canvas**, definindo as métricas técnicas (AUC-ROC, F1-Score) e a métrica de negócio (custo de churn evitado).
-* **📦 Entrega da Fase 0:** Repositório estruturado, ambiente isolado via `pyproject.toml` e ML Canvas concluído.
+* **Fábio (Infraestrutura):** Criar o repositório institucional no GitHub com a estrutura de diretórios obrigatória: `src/`, `data/`, `models/`, `tests/`, `notebooks/` e `docs/`. CONCLUÍDO
+* **Bill (Ambiente e Reprodutibilidade):** Configurar o `pyproject.toml` como única fonte de verdade para dependências e linting. Estabelecer a fixação de *seeds* globais para assegurar a reprodutibilidade dos experimentos. CONCLUÍDO
+* **Romário (Definição de Negócio):** Selecionar o dataset (mínimo de 5.000 registros e 10 features) e iniciar o preenchimento do **ML Canvas**, focando em stakeholders e proposta de valor. CONCLUÍDO
+* **Denis (Métricas e Governança):** Finalizar o **ML Canvas**, definindo as métricas técnicas (AUC-ROC, F1-Score) e a métrica de negócio (custo de churn evitado). EM ANDAMENTO
+* **📦 Entrega da Fase 0:** Repositório estruturado, ambiente isolado via `pyproject.toml` e ML Canvas concluído. EM ANDAMENTO
 
 ---
 
@@ -20,10 +22,10 @@
 **Dinâmica:** Processamento de dados e desenvolvimento do modelo central e baselines para validação de sinal.
 **Ferramentas:** PyTorch, Scikit-Learn, MLflow, Pandas.
 
-* **Integrante 1 (Análise Exploratória):** Executar a EDA completa, documentando volume, qualidade, distribuição e prontidão dos dados (*data readiness*).
-* **Integrante 2 (Engenharia de Dados):** Desenvolver o pipeline de pré-processamento via Scikit-Learn, garantindo a modularização das funções de limpeza e transformação na pasta `src/`.
-* **Integrante 3 (Modelagem Baseline):** Treinar modelos baseline (`DummyClassifier` e `LogisticRegression`) utilizando **validação cruzada estratificada**. Registrar os experimentos no MLflow.
-* **Integrante 4 (Deep Learning):** Construir e treinar a **Rede Neural (MLP)** com PyTorch, implementando loop de treinamento com *batching* e técnica de *early stopping*.
+* **Romário (Análise Exploratória):** Executar a EDA completa, documentando volume, qualidade, distribuição e prontidão dos dados (*data readiness*). CONCLUÍDO
+* **Denis (Engenharia de Dados):** Desenvolver o pipeline de pré-processamento via Scikit-Learn, garantindo a modularização das funções de limpeza e transformação na pasta `src/`. EM ANDAMENTO
+* **Fábio (Modelagem Baseline):** Treinar modelos baseline (`DummyClassifier` e `LogisticRegression`) utilizando **validação cruzada estratificada**. Registrar os experimentos no MLflow. NÃO INICIADO
+* **Bill (Deep Learning):** Construir e treinar a **Rede Neural (MLP)** com PyTorch, implementando loop de treinamento com *batching* e técnica de *early stopping*. NÃO INICIADO
 * **📦 Entrega da Fase 1:** Notebook de EDA, scripts de treinamento e tabela comparativa de modelos registrada no MLflow.
 
 ---
