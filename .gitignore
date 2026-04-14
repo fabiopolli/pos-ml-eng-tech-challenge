@@ -1,0 +1,49 @@
+```text
+# ==========================================
+# AMBIENTES VIRTUAIS & SEGREDOS
+# ==========================================
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# ==========================================
+# CACHE E ARQUIVOS TEMPORÁRIOS DO PYTHON
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+src/*.egg-info/
+
+# ==========================================
+# MLFLOW & MODELOS TREINADOS
+# ==========================================
+mlruns/
+models/
+*.pkl
+*.h5
+*.joblib
+*.pt
+*.pth
+
+# ==========================================
+# DADOS (Proteção contra vazamento de CSVs)
+# ==========================================
+data/raw/
+data/processed/
+
+# ==========================================
+# JUPYTER NOTEBOOKS
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# SISTEMA OPERACIONAL
+# ==========================================
+.DS_Store
+Thumbs.db

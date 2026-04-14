@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "churn-prediction-tech-challenge"
+version = "0.1.0"
+description = "Rede Neural para Previsão de Churn - Pipeline MLOps Profissional"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Bill", email = "bill@example.com" },
+]
+
+# --- DEPENDÊNCIAS DE PRODUÇÃO ---
+dependencies = [
+    # --- Squad 1: Dados e Negócios ---
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "ydata-profiling>=4.5.0",
+    "scikit-learn>=1.3.0",
+    "fairlearn>=0.9.0",
+    "pandera>=0.17.0",  # Essencial para validação de esquemas em produção
+
+    # --- Squad 2: Modelagem Avançada ---
+    "torch>=2.0.0",
+    "mlflow>=2.7.0",
+
+    # --- Squad 3: Engenharia e API ---
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.23.0",
+    "loguru>=0.7.0",
+    "evidently>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.1.0",
+    "ipykernel", # Para rodar os notebooks
+]
+
+# --- CONFIGURAÇÃO DE FERRAMENTAS ---
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+# E: pycodestyle errors, F: Pyflakes, I: isort, UP: pyupgrade, B: bugbear
+select = ["E", "F", "I", "UP", "B"]
+fix = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
