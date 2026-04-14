@@ -34,9 +34,8 @@ mlruns/
 mlflow.db
 
 # ==========================================
-# DADOS (Proteção contra vazamento de CSVs)
+# DADOS (Apenas processados - mantém CSVs públicos)
 # ==========================================
-data/raw/
 data/processed/
 
 # ==========================================
