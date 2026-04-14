@@ -24,12 +24,14 @@ src/*.egg-info/
 # MLFLOW & MODELOS TREINADOS
 # ==========================================
 mlruns/
-models/
+/models/
 *.pkl
 *.h5
 *.joblib
 *.pt
 *.pth
+*.db
+mlflow.db
 
 # ==========================================
 # DADOS (Proteção contra vazamento de CSVs)
