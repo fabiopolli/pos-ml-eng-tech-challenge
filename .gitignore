@@ -37,6 +37,9 @@ mlflow.db
 # DADOS (Apenas processados - mantém CSVs públicos)
 # ==========================================
 data/processed/
+testes_bill/data/processed/
+testes_bill/models/
+testes_bill/evaluation_summary.png
 
 # ==========================================
 # JUPYTER NOTEBOOKS
