@@ -17,72 +17,75 @@ A organização do projeto segue o padrão *src-layout*, garantindo a separaçã
 ```text
 .
 ├── data/
-│   ├── raw/             # Dados originais (imutáveis)
-│   └── processed/       # Dados limpos e transformados
-├── docs/                # Documentação do projeto e ML Canvas
-├── models/              # Artefatos de modelos (gerados pelo MLflow)
-├── notebooks/           # Jupyter Notebooks de EDA e experimentação
-├── src/                 # Código-fonte modularizado
-│   ├── data/            # Scripts de engenharia de dados
-│   └── models/          # Scripts de treino e baselines
-├── tests/               # Testes automatizados (Pytest)
-├── pyproject.toml       # Gerenciamento de dependências e build
-├── setup.ps1            # Automação de ambiente (Windows)
-├── Makefile             # Comandos úteis para desenvolvimento
-└── README.md            # Este arquivo
+│   ├── raw/                  # Dados originais (imutáveis)
+│   └── processed/            # Dados limpos e transformados
+├── docs/                     # Documentação do projeto e ML Canvas
+├── models/                   # Modelos persistidos (.pkl, .pth)
+├── notebooks/                # EDA, experimentação e Dashboard
+│   ├── EDA.ipynb
+│   ├── eda.py
+│   └── app_vis.py            # Dashboard interativo (Streamlit)
+├── src/                      # Código-fonte modularizado
+│   ├── preprocessing/        # Limpeza e engenharia de features
+│   │   └── data_prep.py
+│   └── models/               # Scripts de treino e avaliação
+│       ├── data_utils.py
+│       ├── train_baselines.py
+│       ├── train_mlp.py
+│       └── evaluate_models.py
+├── tests/                    # Testes automatizados (Pytest)
+├── main.py                   # Orquestrador do pipeline completo
+├── pyproject.toml            # Gerenciamento de dependências e build
+├── setup.ps1                 # Automação de ambiente (Windows)
+├── Makefile                  # Comandos úteis para desenvolvimento
+└── README.md                 # Este arquivo
+```
 
 ---
 
 ## 🛠️ Configuração do Ambiente Local
 
-### Prerequisitos
+### Pré-requisitos
 - **Python 3.10+** instalado
-- **Windows PowerShell** (para usando setup.ps1) ou terminal Unix-like
 - **Git** configurado
 
 ### Passo 1: Clonar o Repositório
-```powershell
+```bash
 git clone https://github.com/fabiopolli/pos-ml-eng-tech-challenge.git
 cd pos-ml-eng-tech-challenge
 ```
 
-### Passo 2: Setup Automático (Windows)
-Execute o script de automação que faz todo o setup de uma vez:
+### Passo 2: Criar e Ativar o Ambiente Virtual
 
+**Windows (PowerShell) — setup automático:**
 ```powershell
 .\setup.ps1
-```
-
-Este script irá:
-1. ✅ Criar um ambiente virtual (`.venv`)
-2. ✅ Atualizar o pip
-3. ✅ Instalar todas as dependências do projeto
-
-> **Nota:** Se receber um erro de permissão, execute: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-
-### Passo 3: Ativar o Ambiente Virtual
-Após o setup, ative o ambiente com:
-
-```powershell
 .\.venv\Scripts\activate
 ```
+> Se receber erro de permissão: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
-Você saberá que está ativado quando o terminal mostrar `(.venv)` no início da linha.
-
-### Setup Manual (Alternativa - Linux/macOS ou sem PowerShell)
-Se preferir fazer manualmente ou está em outro SO:
-
+**Linux/macOS — com `uv` (recomendado):**
 ```bash
-# Criar ambiente virtual
-python -m venv .venv
-
-# Ativar (Linux/macOS)
+uv venv
 source .venv/bin/activate
+```
+> ⚠️ **Atenção:** ao usar `uv venv`, instale com `uv pip` (não `pip`). Misturar os dois causa erro no Debian/Ubuntu (PEP 668).
 
-# Ou ativar (Windows - bash)
-.\.venv\Scripts\activate
+**Linux/macOS — com `venv` padrão:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-# Instalar dependências
+### Passo 3: Instalar Dependências
+
+**Com `uv` (após `uv venv`):**
+```bash
+uv pip install -e ".[dev]"
+```
+
+**Com `pip` padrão:**
+```bash
 pip install --upgrade pip
 pip install -e ".[dev]"
 ```
@@ -91,68 +94,56 @@ pip install -e ".[dev]"
 
 ## 🚀 Executando o Pipeline
 
-### Executar o Treino de Baseline
-Após ativar o ambiente virtual, execute:
+### Pipeline Completo (Quick Start)
 
-```powershell
-python src/models/train_baseline.py
+Execute o orquestrador principal para treinar todos os modelos em sequência:
+
+```bash
+python main.py
 ```
 
-Este comando irá:
-1. 📊 Carregar o dataset de churn from `data/raw/Telco-Customer-Churn.csv`
-2. 🔧 Aplicar pré-processamento (normalização, encoding)
-3. 🤖 Treinar dois modelos baseline:
-   - **DummyClassifier** (baseline trivial)
-   - **LogisticRegression** (modelo inicial)
-4. 📈 Executar validação cruzada (5-fold)
-5. 💾 Registrar métricas e modelos no MLflow
+Isso executa, nessa ordem:
+1. **Etapa 1** → `train_baselines.py`: treina `DummyClassifier` e `LogisticRegression`, salvando em `models/`
+2. **Etapa 2** → `train_mlp.py`: treina a Rede Neural `MLP` (PyTorch), salvando em `models/`
 
-**Saída esperada:**
-```
-Carregando os dados...
-Configurando o pipeline de pré-processamento...
-Iniciando experimentos...
+### Execução Modular (passo a passo)
 
---- Treinando: DummyClassifier_Baseline ---
-cv_accuracy: 0.7850
-cv_precision: 0.0000
-cv_recall: 0.0000
-cv_f1_score: 0.0000
+Caso queira executar etapas individualmente:
 
---- Treinando: LogisticRegression_Baseline ---
-cv_accuracy: 0.8025
-cv_precision: 0.6234
-cv_recall: 0.5120
-cv_f1_score: 0.5621
+```bash
+# (Opcional) Processa e exporta CSVs para data/processed/
+python src/preprocessing/data_prep.py
 
-✅ Concluído! Para ver os resultados, digite 'mlflow ui' no terminal.
+# Treina DummyClassifier e LogisticRegression
+python src/models/train_baselines.py
+
+# Treina a Rede Neural MLP (PyTorch)
+python src/models/train_mlp.py
+
+# Gera métricas finais e gráficos comparativos
+python src/models/evaluate_models.py
 ```
 
 ### Visualizar Resultados no MLflow
-Após executar o treino, visualize os experimentos:
-
-```powershell
+```bash
 mlflow ui
 ```
+O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode comparar métricas entre runs, analisar parâmetros e baixar modelos treinados.
 
-O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode:
-- 📊 Comparar métricas entre runs
-- 📈 Analisar parâmetros e performance
-- 💾 Baixar modelos treinados
+### Dashboard Interativo (Streamlit)
+```bash
+streamlit run notebooks/app_vis.py
+```
 
 ---
 
 ## 🧪 Execução de Testes
 
-Execute os testes automatizados com pytest:
-
-```powershell
+```bash
+# Rodar todos os testes
 pytest tests/
-```
 
-Para rodas testes com cobertura:
-
-```powershell
+# Rodar com cobertura de código
 pytest tests/ --cov=src
 ```
 
@@ -160,14 +151,12 @@ pytest tests/ --cov=src
 
 ## 📝 Exploração de Dados (Notebooks)
 
-Execute os notebooks Jupyter para exploração interativa:
-
-```powershell
+```bash
 jupyter notebook
 ```
 
 Os notebooks disponíveis estão em `notebooks/`:
-- **EDA.ipynb** - Análise Exploratória de Dados
+- **EDA.ipynb** — Análise Exploratória de Dados interativa
 
 ---
 
@@ -175,44 +164,49 @@ Os notebooks disponíveis estão em `notebooks/`:
 
 As dependências estão organizadas em `pyproject.toml`:
 
-**Dependências de Produção (incluídas no setup):**
-- `pandas`, `numpy` - Manipulação de dados
-- `scikit-learn` - Algoritmos de ML clássicos
-- `torch` - Deep Learning (fase posterior)
-- `mlflow` - Rastreamento de experimentos
-- `fastapi`, `pydantic`, `uvicorn` - API REST
-- E outras (ver `pyproject.toml`)
+**Produção:**
+- `pandas`, `numpy` — Manipulação de dados
+- `scikit-learn` — Algoritmos de ML clássicos
+- `torch` — Deep Learning (MLP)
+- `joblib` — Serialização de modelos
+- `mlflow` — Rastreamento de experimentos
+- `streamlit` — Dashboard interativo
+- `fastapi`, `pydantic`, `uvicorn` — API REST
+- `matplotlib`, `seaborn` — Visualização
 
-**Dependências de Desenvolvimento:**
-- `pytest` - Testes automatizados
-- `ruff` - Linting e formatação
-- `ipykernel` - Suporte para Jupyter
+**Desenvolvimento:**
+- `pytest` — Testes automatizados
+- `ruff` — Linting e formatação
+- `ipykernel` — Suporte para Jupyter
 
 ---
 
 ## 🔗 Workflow Típico de Desenvolvimento
 
 1. **Setup inicial:**
-   ```powershell
-   .\setup.ps1
-   .\.venv\Scripts\activate
+   ```bash
+   # Linux
+   uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+   # Windows
+   .\setup.ps1 && .\.venv\Scripts\activate
    ```
 
 2. **Desenvolver/Corrigir código**
 
 3. **Testar localmente:**
-   ```powershell
+   ```bash
    pytest tests/
    ```
 
-4. **Rodar experimentos:**
-   ```powershell
-   python src/models/train_baseline.py
+4. **Rodar o pipeline completo:**
+   ```bash
+   python main.py
+   python src/models/evaluate_models.py
    mlflow ui  # visualizar resultados
    ```
 
 5. **Commit e push:**
-   ```powershell
+   ```bash
    git add .
    git commit -m "Descrição das mudanças"
    git push origin main
@@ -226,3 +220,4 @@ As dependências estão organizadas em `pyproject.toml`:
 - **FIAP Tech Challenge:** [Link do desafio]
 - **MLflow Docs:** https://mlflow.org/docs/latest/index.html
 - **Scikit-learn:** https://scikit-learn.org/
+- **PyTorch:** https://pytorch.org/docs/stable/index.html

@@ -112,9 +112,9 @@ def plot_correlation_matrix(df):
     plt.show()
 
 def main():
-    # Caminho do dataset
-    # Ajustado para o local correto: data/raw/Telco-Customer-Churn.csv
-    data_path = os.path.join('data', 'raw', 'Telco-Customer-Churn.csv')
+    # Raiz do projeto: notebooks/ -> projeto/
+    _base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_path = os.path.join(_base_dir, 'data', 'raw', 'Telco-Customer-Churn.csv')
     
     try:
         dataset = load_data(data_path)

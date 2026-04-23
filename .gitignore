@@ -1,4 +1,3 @@
-```text
 # ==========================================
 # AMBIENTES VIRTUAIS & SEGREDOS
 # ==========================================
@@ -7,6 +6,9 @@ venv/
 env/
 .env
 .env.*
+*.key
+*.pem
+secrets/
 
 # ==========================================
 # CACHE E ARQUIVOS TEMPORÁRIOS DO PYTHON
@@ -19,12 +21,15 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 src/*.egg-info/
+dist/
+build/
+.eggs/
 
 # ==========================================
 # MLFLOW & MODELOS TREINADOS
 # ==========================================
 mlruns/
-/models/
+models/
 *.pkl
 *.h5
 *.joblib
@@ -34,12 +39,12 @@ mlruns/
 mlflow.db
 
 # ==========================================
-# DADOS (Apenas processados - mantém CSVs públicos)
+# DADOS
+# Mantém data/raw/ (dataset público) no repo.
+# Exclui dados processados (artefatos gerados).
 # ==========================================
 data/processed/
-testes_bill/data/processed/
-testes_bill/models/
-testes_bill/evaluation_summary.png
+evaluation_summary.png
 
 # ==========================================
 # JUPYTER NOTEBOOKS
@@ -51,3 +56,17 @@ testes_bill/evaluation_summary.png
 # ==========================================
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ==========================================
+# IDEs & EDITORES
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# DIRETÓRIO DE TESTES LOCAIS (legado)
+# ==========================================
+testes_bill/

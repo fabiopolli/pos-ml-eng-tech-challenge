@@ -91,9 +91,9 @@ def scale_features(X_train, X_test):
     return X_train_scaled, X_test_scaled
 
 def main():
-    # Ajuste de caminhos relativos ao diretório do script
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_path, 'data/raw/Telco-Customer-Churn.csv')
+    # Raiz do projeto: src/preprocessing/ -> src/ -> projeto/
+    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    file_path = os.path.join(base_path, 'data', 'raw', 'Telco-Customer-Churn.csv')
     
     # 1. Carregamento e Limpeza
     df = load_and_clean_data(file_path)
@@ -122,7 +122,7 @@ def main():
     print("-" * 50)
     
     # 6. Salvar os artefatos processados
-    output_dir = os.path.join(base_path, 'data/processed')
+    output_dir = os.path.join(base_path, 'data', 'processed')
     os.makedirs(output_dir, exist_ok=True)
     
     X_train.to_csv(os.path.join(output_dir, "X_train.csv"), index=False)

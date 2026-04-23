@@ -1,45 +1,67 @@
-import pandas as pd
-from src.preprocessing import limpar_dados, criar_pipeline
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-import numpy as np
+"""
+Pipeline Completo de Treinamento - Telco Churn Prediction
+=========================================================
+Orquestra as etapas do pipeline ML em sequência:
+  1. Baselines (DummyClassifier + LogisticRegression)
+  2. Rede Neural (MLP com PyTorch)
 
-# carregar dados
-df = pd.read_csv("data/raw/Telco-Customer-Churn.csv")
+Execute a partir da raiz do projeto:
+    python main.py
+"""
 
-# limpeza
-df = limpar_dados(df)
+import sys
+import os
+import time
 
-# separar X e y
-X = df.drop("Churn", axis=1)
-y = df["Churn"]
+# Garante que src/models/ esteja acessível para os imports internos dos módulos
+_models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'models')
+if _models_dir not in sys.path:
+    sys.path.insert(0, _models_dir)
 
-# split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+from src.models.train_baselines import main as train_baselines
+from src.models.train_mlp import main as train_mlp
 
-# pipeline
-pipeline = criar_pipeline()
 
-# aplicar transformações
-X_train_processed = pipeline.fit_transform(X_train)
-X_test_processed = pipeline.transform(X_test)
+def print_header(title: str) -> None:
+    """Exibe um cabeçalho formatado para separar as etapas do pipeline."""
+    width = 50
+    print()
+    print("=" * width)
+    print(f"  {title}")
+    print("=" * width)
 
-#  Validacao 
 
-print("Shape original:", X.shape)
-print("Shape treino:", X_train_processed.shape)
-print("Shape teste:", X_test_processed.shape)
+def main():
+    start_total = time.time()
 
-print("Tipo do dado:", type(X_train_processed))
+    print_header("ETAPA 1/2 — Treinando Modelos Baseline")
+    print("  → DummyClassifier (most_frequent)")
+    print("  → LogisticRegression (class_weight='balanced')")
+    print()
+    start = time.time()
+    train_baselines()
+    print(f"  ✓ Baselines concluídos em {time.time() - start:.1f}s")
 
-print("Tem NaN?", np.isnan(X_train_processed).any())
+    print_header("ETAPA 2/2 — Treinando Rede Neural (MLP)")
+    print("  → ChurnMLP: Linear(input→32) → ReLU → Linear(32→16) → ReLU → Linear(16→1)")
+    print()
+    start = time.time()
+    train_mlp()
+    print(f"  ✓ MLP concluído em {time.time() - start:.1f}s")
 
-#  TESTE  MODELO
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train_processed, y_train)
+    print()
+    print("=" * 50)
+    print(f"  PIPELINE COMPLETO — {time.time() - start_total:.1f}s total")
+    print("  Modelos salvos em: models/")
+    print("    - dummy_model.pkl")
+    print("    - logistic_model.pkl")
+    print("    - mlp_model.pth")
+    print("=" * 50)
+    print()
+    print("  Próximo passo: avalie os modelos com")
+    print("  python src/models/evaluate_models.py")
+    print()
 
-score = model.score(X_test_processed, y_test)
 
-print("Acurácia do modelo:", score)
-
-print("Pipeline executado com sucesso ")
+if __name__ == "__main__":
+    main()
