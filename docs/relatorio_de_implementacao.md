@@ -67,12 +67,31 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 
 ---
 
-## 6. Ferramentas Utilizadas
+---
+
+## 7. Gestão do Ciclo de Vida com MLflow
+
+**O que foi feito:** Integramos o MLflow Tracking e Model Registry ao pipeline.
+
+**Por que foi feito:**
+- **Rastreabilidade:** Cada treinamento gera um registro único de parâmetros e métricas.
+- **Comparabilidade:** Permite comparar visualmente a evolução da perda (loss) da Rede Neural entre diferentes experimentos.
+- **Versionamento de Modelos:** Centralizamos os modelos no Registry, permitindo transições de estado (Staging/Production).
+
+**Como foi feito:**
+- **Tracking:** Parâmetros e métricas são logados automaticamente em `mlruns/`.
+- **Model Registry:** Modelos são registrados com nomes como `ChurnMLP` e `ChurnLogisticRegression`.
+- **Isolamento em Testes:** Criamos fixtures para garantir que os testes automatizados não poluam o histórico de experimentos reais.
+
+---
+
+## 8. Ferramentas Utilizadas
 
 - **UV:** Gerenciador de pacotes ultra-rápido para garantir que todos no time usem as mesmas versões de biblioteca.
+- **MLflow:** Gestão de experimentos, métricas e registro de modelos.
 - **Loguru:** Substituímos o `print` por logs estruturados, facilitando o debug em ambientes de produção.
 - **Pathlib:** Garante que o código funcione tanto em Windows quanto Linux/Mac, tratando caminhos de arquivos de forma inteligente.
 
 ---
-**Data de Atualização:** 23 de Abril de 2026
+**Data de Atualização:** 24 de Abril de 2026
 **Responsável:** Agent <Data> (Auxiliando Bill)

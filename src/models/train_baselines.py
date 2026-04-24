@@ -20,7 +20,16 @@ Modelos treinados aqui:
      o Dummy, mas ainda simples e interpretável. Com class_weight='balanced',
      ele presta mais atenção nos casos de churn (classe minoritária).
 
-Artefatos gerados em 'models/':
+Integração com MLflow:
+-----------------------
+Cada execução deste script cria uma "run" no experimento "churn-prediction"
+do MLflow, registrando automaticamente:
+  - Parâmetros: hiperparâmetros do BaselineConfig (max_iter, class_weight...)
+  - Métricas: acurácia dos dois modelos no conjunto de treino
+  - Modelos: os dois modelos sklearn logados com assinatura de I/O e
+             registrados no MLflow Model Registry para versionamento
+
+Artefatos gerados em 'models/' (compatibilidade legada):
   - dummy_model.pkl    → Modelo Dummy serializado
   - logistic_model.pkl → Regressão Logística serializada
   - scaler.pkl         → Normalizador ajustado no treino (essencial para produção)
@@ -30,11 +39,14 @@ Execução:
 """
 
 import joblib
+import mlflow
+import mlflow.sklearn
 from loguru import logger
+from mlflow.models.signature import infer_signature
 from pathlib import Path
-
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 from src.models.config import PipelineConfig
 from src.models.data_utils import get_data_splits, set_seed
@@ -47,7 +59,7 @@ def main(
 ) -> None:
     """
     Treina os modelos de baseline (Dummy e Logistic Regression) e persiste
-    os artefatos treinados em disco.
+    os artefatos treinados em disco e no MLflow Model Registry.
 
     Por que aceitar data_path e models_dir como parâmetros?
     -------------------------------------------------------
@@ -55,6 +67,12 @@ def main(
     padrão do projeto são usados automaticamente. Quando chamado pelos testes
     automatizados, caminhos temporários são injetados para não interferir
     nos modelos reais do projeto.
+
+    O MLflow nos testes:
+    --------------------
+    Nos testes automatizados, o tracking URI é redirecionado para um diretório
+    temporário (via `mlflow.set_tracking_uri(tmp_path)` no conftest.py),
+    garantindo que os runs de teste não poluam o experimento de desenvolvimento.
 
     Args:
         data_path: Caminho para o CSV bruto. Se None, usa o padrão do projeto
@@ -88,43 +106,112 @@ def main(
         logger.error("Arquivo não encontrado em {}", file_path)
         return  # Encerra sem lançar exceção — o erro já foi logado
 
-    # 3. Treinamento do Modelo Dummy
-    # O DummyClassifier com strategy='most_frequent' simplesmente olha qual
-    # classe aparece mais no treino e sempre prevê essa classe para qualquer
-    # entrada. É completamente "burro" — não olha nenhuma feature.
-    logger.info("Treinando Dummy Classifier (most_frequent)...")
-    dummy = DummyClassifier(strategy="most_frequent")
-    dummy.fit(X_train, y_train)
+    # =========================================================================
+    # 3. Configuração do MLflow
+    # =========================================================================
+    # mlflow.set_experiment garante que a run será criada dentro do experimento
+    # correto. Se o experimento ainda não existir, o MLflow o cria automaticamente.
+    # O tracking URI já foi configurado pelo main.py (ou pelo conftest.py nos testes).
+    mlflow.set_experiment(cfg.mlflow.experiment_name)
 
-    # 4. Treinamento da Regressão Logística
-    # Apesar do nome, é um classificador. Aprende uma combinação linear das
-    # features que separa "churn" de "não churn". É rápido, interpretável e
-    # frequentemente surpreendentemente eficaz para problemas tabulares.
-    logger.info(
-        "Treinando Regressão Logística (class_weight='{}', max_iter={})...",
-        cfg.baseline.logistic_class_weight,
-        cfg.baseline.logistic_max_iter,
-    )
-    lr = LogisticRegression(
-        class_weight=cfg.baseline.logistic_class_weight,  # 'balanced' compensa o desbalanceamento
-        max_iter=cfg.baseline.logistic_max_iter,           # Iterações máximas para convergir
-        random_state=cfg.baseline.random_state,            # Para reprodutibilidade
-    )
-    lr.fit(X_train, y_train)
+    # mlflow.start_run() abre um contexto de rastreamento. Tudo que for logado
+    # (params, metrics, modelos) dentro deste bloco pertence a esta "run".
+    # run_name é um rótulo amigável visível na UI do MLflow.
+    with mlflow.start_run(run_name="baseline_run"):
 
-    # 5. Persistência dos Modelos e do Scaler
-    # joblib.dump serializa o objeto Python para um arquivo binário (.pkl).
-    # joblib.load (usado na avaliação) faz o processo inverso.
-    # O scaler DEVE ser salvo aqui pois é necessário para normalizar novos
-    # dados antes da predição em produção.
-    joblib.dump(dummy, out_dir / "dummy_model.pkl")
-    joblib.dump(lr, out_dir / "logistic_model.pkl")
-    joblib.dump(scaler, out_dir / "scaler.pkl")
+        # --- Log de Parâmetros ---
+        # mlflow.log_params registra os hiperparâmetros como pares chave-valor.
+        # Estes são os "botões" que configuramos ANTES do treinamento.
+        # Na UI do MLflow, você pode comparar runs com diferentes parâmetros
+        # para entender o impacto de cada configuração.
+        mlflow.log_params({
+            "seed": cfg.seed,
+            "logistic_max_iter": cfg.baseline.logistic_max_iter,
+            "logistic_class_weight": cfg.baseline.logistic_class_weight,
+            "random_state": cfg.baseline.random_state,
+        })
 
-    logger.success("Artefatos salvos em '{}':", out_dir)
-    logger.info("  - dummy_model.pkl")
-    logger.info("  - logistic_model.pkl")
-    logger.info("  - scaler.pkl")
+        # 4. Treinamento do Modelo Dummy
+        # O DummyClassifier com strategy='most_frequent' simplesmente olha qual
+        # classe aparece mais no treino e sempre prevê essa classe para qualquer
+        # entrada. É completamente "burro" — não olha nenhuma feature.
+        logger.info("Treinando Dummy Classifier (most_frequent)...")
+        dummy = DummyClassifier(strategy="most_frequent")
+        dummy.fit(X_train, y_train)
+
+        # 5. Treinamento da Regressão Logística
+        # Apesar do nome, é um classificador. Aprende uma combinação linear das
+        # features que separa "churn" de "não churn". É rápido, interpretável e
+        # frequentemente surpreendentemente eficaz para problemas tabulares.
+        logger.info(
+            "Treinando Regressão Logística (class_weight='{}', max_iter={})...",
+            cfg.baseline.logistic_class_weight,
+            cfg.baseline.logistic_max_iter,
+        )
+        lr = LogisticRegression(
+            class_weight=cfg.baseline.logistic_class_weight,  # 'balanced' compensa o desbalanceamento
+            max_iter=cfg.baseline.logistic_max_iter,           # Iterações máximas para convergir
+            random_state=cfg.baseline.random_state,            # Para reprodutibilidade
+        )
+        lr.fit(X_train, y_train)
+
+        # --- Log de Métricas de Treino ---
+        # Registramos a acurácia no conjunto de treino como uma métrica de
+        # sanidade — não é a métrica final (essa fica no evaluate_models.py),
+        # mas nos ajuda a confirmar que os modelos foram treinados corretamente.
+        dummy_train_acc = accuracy_score(y_train, dummy.predict(X_train))
+        lr_train_acc = accuracy_score(y_train, lr.predict(X_train))
+
+        mlflow.log_metrics({
+            "dummy_train_accuracy": dummy_train_acc,
+            "lr_train_accuracy": lr_train_acc,
+        })
+        logger.info(
+            "Métricas de treino | Dummy Acc: {:.4f} | LR Acc: {:.4f}",
+            dummy_train_acc, lr_train_acc,
+        )
+
+        # --- Log dos Modelos no MLflow ---
+        # infer_signature analisa X_train e as predições para gerar automaticamente
+        # o "contrato" de I/O do modelo: quais features ele espera e o que retorna.
+        # Isso é essencial para validação em produção e para o Serving do MLflow.
+        dummy_signature = infer_signature(X_train, dummy.predict(X_train))
+        lr_signature = infer_signature(X_train, lr.predict(X_train))
+
+        # mlflow.sklearn.log_model salva o modelo serializado como um artefato
+        # da run, junto com dependências e metadados. O artifact_path é o nome
+        # da subpasta dentro dos artefatos da run na UI do MLflow.
+        dummy_model_info = mlflow.sklearn.log_model(
+            sk_model=dummy,
+            artifact_path="dummy_model",
+            signature=dummy_signature,
+            registered_model_name="ChurnDummyClassifier" if cfg.mlflow.register_model else None,
+        )
+        lr_model_info = mlflow.sklearn.log_model(
+            sk_model=lr,
+            artifact_path="logistic_model",
+            signature=lr_signature,
+            registered_model_name="ChurnLogisticRegression" if cfg.mlflow.register_model else None,
+        )
+
+        logger.success(
+            "MLflow | Modelos registrados | Dummy: {} | LR: {}",
+            dummy_model_info.model_uri,
+            lr_model_info.model_uri,
+        )
+
+        # 6. Persistência Legada dos Modelos e do Scaler
+        # Mantemos o salvamento local em .pkl para compatibilidade com o
+        # frontend Streamlit (front/app_vis.py) e o evaluate_models.py legado.
+        # joblib.dump serializa o objeto Python para um arquivo binário (.pkl).
+        joblib.dump(dummy, out_dir / "dummy_model.pkl")
+        joblib.dump(lr, out_dir / "logistic_model.pkl")
+        joblib.dump(scaler, out_dir / "scaler.pkl")
+
+        logger.success("Artefatos salvos em '{}':", out_dir)
+        logger.info("  - dummy_model.pkl")
+        logger.info("  - logistic_model.pkl")
+        logger.info("  - scaler.pkl")
 
 
 if __name__ == "__main__":

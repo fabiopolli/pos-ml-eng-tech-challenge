@@ -142,3 +142,48 @@ class PipelineConfig:
     seed: int = 42
     mlp: MLPConfig = field(default_factory=MLPConfig)
     baseline: BaselineConfig = field(default_factory=BaselineConfig)
+    mlflow: "MLFlowConfig" = field(default_factory=lambda: MLFlowConfig())
+
+
+@dataclass
+class MLFlowConfig:
+    """
+    Configurações de rastreamento e registro de modelos com o MLflow.
+
+    O MLflow é a plataforma de MLOps usada neste projeto para gerenciar
+    o ciclo de vida dos modelos: desde o tracking de experimentos até o
+    registro e versionamento de modelos prontos para produção.
+
+    O que é um Experimento no MLflow?
+    ----------------------------------
+    Um Experimento é um grupo lógico de "runs" (execuções). Cada vez que
+    você treina um modelo, o MLflow cria uma nova "run" dentro do experimento,
+    registrando automaticamente parâmetros, métricas e artefatos.
+
+    O que é o Model Registry?
+    --------------------------
+    É um catálogo central de modelos versionados. Após o treinamento, o modelo
+    é "registrado" no Registry com um nome (ex: "ChurnMLP") e uma versão
+    (v1, v2...). Isso permite promover modelos entre estágios:
+    None → Staging → Production → Archived.
+
+    Atributos:
+        experiment_name (str):
+            Nome do experimento no MLflow. Todos os runs de treinamento e
+            avaliação deste pipeline serão agrupados sob este nome.
+
+        tracking_uri (str):
+            URI do servidor de tracking. O valor padrão "mlruns" usa
+            armazenamento local em arquivo (nenhum servidor externo necessário).
+            Para um servidor remoto: "http://my-mlflow-server:5000".
+            Pode ser sobrescrito pela variável de ambiente MLFLOW_TRACKING_URI.
+
+        register_model (bool):
+            Se True, os modelos treinados são registrados no Model Registry
+            após cada run de treinamento. Defina como False para desabilitar
+            o registro (útil em ambientes de CI onde o registry não está disponível).
+    """
+
+    experiment_name: str = "churn-prediction"
+    tracking_uri: str = "mlruns"
+    register_model: bool = True

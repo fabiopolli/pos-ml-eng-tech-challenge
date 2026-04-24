@@ -14,15 +14,29 @@ O design é intencionalmente simples: cada etapa é independente e poderia
 ser executada isoladamente. O main.py apenas garante a ordem correta e
 fornece um log visual do progresso.
 
+Integração com MLflow:
+----------------------
+Este script é responsável por configurar o MLflow ANTES de qualquer
+treinamento, garantindo que todas as runs pertençam ao mesmo experimento
+e usem o mesmo tracking URI. Os submodules (train_baselines.py e
+train_mlp.py) herdam essa configuração automaticamente via contexto global
+do MLflow.
+
 Execução:
     python main.py
+
+Visualizar os experimentos:
+    mlflow ui   (ou: make mlflow-ui)
+    Abra http://localhost:5000 no navegador.
 
 Próximo passo após o pipeline:
     python src/models/evaluate_models.py
 """
 
 import time
+import mlflow
 
+from src.models.config import PipelineConfig
 from src.models.train_baselines import main as train_baselines
 from src.models.train_mlp import main as train_mlp
 
@@ -65,7 +79,21 @@ def main() -> None:
     transforma o CSV bruto do zero. Isso garante que cada modelo receba
     exatamente os mesmos dados, com o mesmo split, sem nenhum "vazamento"
     entre as etapas.
+
+    Configuração do MLflow:
+    -----------------------
+    Definimos o tracking URI e o experimento aqui, uma única vez, antes
+    de qualquer treinamento. Os submodules herdam essa configuração
+    automaticamente via estado global do MLflow client.
     """
+    # --- Configuração Central do MLflow ---
+    # Instancia a configuração padrão para ler as configs do MLflow.
+    # Isso garante que todos os runs do pipeline pertençam ao mesmo
+    # experimento e usem o mesmo tracking URI.
+    cfg = PipelineConfig()
+    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
+    mlflow.set_experiment(cfg.mlflow.experiment_name)
+
     start_total = time.time()
 
     # --- ETAPA 1: Modelos de Baseline ---
@@ -95,6 +123,14 @@ def main() -> None:
     print("    - mlp_model.pth      → Rede Neural MLP (pesos PyTorch)")
     print("    - scaler.pkl         → StandardScaler (necessário para produção)")
     print("=" * 50)
+    print()
+    print("  Experimentos MLflow registrados em:")
+    print(f"    Tracking URI : {cfg.mlflow.tracking_uri}/")
+    print(f"    Experimento  : {cfg.mlflow.experiment_name}")
+    print()
+    print("  Para visualizar a UI do MLflow:")
+    print("    make mlflow-ui   (ou: mlflow ui)")
+    print("    Acesse: http://localhost:5000")
     print()
     print("  Próximo passo: avalie os modelos com")
     print("  python src/models/evaluate_models.py")

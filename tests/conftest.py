@@ -1,7 +1,37 @@
+import mlflow
 import numpy as np
 import pandas as pd
 import pytest
 from pathlib import Path
+
+
+@pytest.fixture(autouse=True)
+def mlflow_test_tracking(tmp_path: Path):
+    """
+    Fixture de isolamento do MLflow para todos os testes.
+
+    Por que isso é necessário?
+    --------------------------
+    As funções de treinamento (train_baselines, train_mlp) agora chamam
+    mlflow.start_run() internamente. Sem este isolamento, cada execução
+    dos testes criaria runs reais no diretório 'mlruns/' do projeto,
+    poluindo os experimentos de desenvolvimento com dados sintéticos.
+
+    Esta fixture usa `autouse=True` para ser aplicada AUTOMATICAMENTE a
+    todos os testes sem precisar declará-la explicitamente.
+
+    O que ela faz:
+    1. Redireciona o tracking URI para um diretório temporário único
+       por sessão de teste (é deletado automaticamente pelo pytest).
+    2. Desabilita o registro no Model Registry (register_model=False)
+       para evitar chamadas ao registry durante os testes.
+    3. Restaura as configurações originais após cada teste (via yield).
+    """
+    test_mlruns = tmp_path / "mlruns"
+    mlflow.set_tracking_uri(str(test_mlruns))
+    yield
+    # Restaura o tracking URI padrão após o teste
+    mlflow.set_tracking_uri("mlruns")
 
 
 @pytest.fixture

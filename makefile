@@ -1,4 +1,4 @@
-.PHONY: setup run eval test test-full
+.PHONY: setup run eval test test-full mlflow-ui
 
 setup:
 	uv venv
@@ -17,3 +17,7 @@ test:
 
 test-full:
 	uv run python -m pytest tests/ -v
+
+mlflow-ui:
+	@echo "Iniciando MLflow UI em http://localhost:5000 ..."
+	uv run mlflow ui

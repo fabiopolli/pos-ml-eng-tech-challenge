@@ -23,7 +23,14 @@ camadas ocultas e funções de ativação (ReLU), consegue capturar relações
 não-lineares e interações complexas entre as features — potencialmente
 melhorando a detecção de padrões sutis de churn.
 
-Artefatos gerados em 'models/':
+Integração com MLflow:
+-----------------------
+Esta run registra as métricas de perda (train_loss e val_loss) A CADA ÉPOCA,
+gerando curvas de aprendizado navegáveis na UI do MLflow. Isso permite
+identificar visualmente overfitting (val_loss crescendo enquanto train_loss cai)
+sem precisar reler os logs de texto.
+
+Artefatos gerados em 'models/' (compatibilidade legada):
   - mlp_model.pth → Pesos da rede neural no formato PyTorch
 
 Execução:
@@ -31,10 +38,13 @@ Execução:
 """
 
 import numpy as np
+import mlflow
+import mlflow.pytorch
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from loguru import logger
+from mlflow.models.signature import infer_signature
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -141,13 +151,20 @@ def main(
     config: PipelineConfig | None = None,
 ) -> None:
     """
-    Treina a Rede Neural MLP e salva os pesos em disco.
+    Treina a Rede Neural MLP, registra os experimentos no MLflow e salva
+    os pesos em disco.
 
     O loop de treinamento segue o ciclo padrão de ML com PyTorch:
       Para cada época:
         1. Modo treino: passa os batches, calcula loss, atualiza pesos.
         2. Modo avaliação: passa os dados de validação SEM atualizar pesos.
-        3. Loga as losses para monitorar a convergência.
+        3. Loga as losses no MLflow (step=epoch) para curvas de aprendizado.
+
+    Curvas de aprendizado no MLflow:
+    ---------------------------------
+    Ao logar train_loss e val_loss com step=epoch, a UI do MLflow gera
+    automaticamente gráficos de linha mostrando a evolução do aprendizado.
+    Se val_loss começar a subir enquanto train_loss cai, é sinal de overfitting.
 
     Args:
         data_path: Caminho para o CSV bruto. Se None, usa o padrão do projeto.
@@ -215,58 +232,122 @@ def main(
     # automaticamente para cada parâmetro. É a escolha padrão para MLP.
     optimizer = optim.Adam(model.parameters(), lr=cfg.mlp.learning_rate)
 
-    # 6. Loop de Treinamento
-    logger.info(
-        "Iniciando treinamento | épocas={} | batch={} | lr={}",
-        cfg.mlp.epochs, cfg.mlp.batch_size, cfg.mlp.learning_rate,
-    )
+    # =========================================================================
+    # 6. Configuração do MLflow e Loop de Treinamento
+    # =========================================================================
+    mlflow.set_experiment(cfg.mlflow.experiment_name)
 
-    for epoch in range(cfg.mlp.epochs):
+    with mlflow.start_run(run_name="mlp_run"):
 
-        # --- FASE DE TREINO ---
-        # model.train() ativa comportamentos específicos do treino:
-        # - Dropout está ATIVO (desliga neurônios aleatoriamente)
-        # - BatchNorm (se houver) usa estatísticas do batch atual
-        model.train()
-        train_loss = 0.0
+        # --- Log de Parâmetros ---
+        # Registramos TODOS os hiperparâmetros da MLP para que cada run
+        # seja completamente reproduzível e comparável na UI do MLflow.
+        mlflow.log_params({
+            "seed": cfg.seed,
+            "hidden_dims": str(cfg.mlp.hidden_dims),
+            "dropout_rate": cfg.mlp.dropout_rate,
+            "epochs": cfg.mlp.epochs,
+            "batch_size": cfg.mlp.batch_size,
+            "learning_rate": cfg.mlp.learning_rate,
+            "input_dim": X_train.shape[1],
+        })
 
-        for batch_x, batch_y in train_loader:
-            optimizer.zero_grad()           # Zera os gradientes do passo anterior
-            loss = criterion(model(batch_x), batch_y)  # Calcula a perda
-            loss.backward()                 # Backpropagation: calcula gradientes
-            optimizer.step()               # Atualiza os pesos com base nos gradientes
-            train_loss += loss.item()      # Acumula a perda para calcular a média
+        logger.info(
+            "Iniciando treinamento | épocas={} | batch={} | lr={}",
+            cfg.mlp.epochs, cfg.mlp.batch_size, cfg.mlp.learning_rate,
+        )
 
-        # --- FASE DE VALIDAÇÃO ---
-        # model.eval() desativa dropout e usa estatísticas fixas do BatchNorm.
-        # torch.no_grad() desabilita o cálculo de gradientes — não precisamos
-        # deles aqui, o que economiza memória e acelera o cálculo.
-        model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for batch_x, batch_y in val_loader:
-                val_loss += criterion(model(batch_x), batch_y).item()
+        # 7. Loop de Treinamento
+        for epoch in range(cfg.mlp.epochs):
 
-        # Loga o progresso a cada 10 épocas (ou na primeira).
-        # Se a val_loss estiver AUMENTANDO enquanto a train_loss diminui,
-        # é sinal de overfitting — considere reduzir épocas ou adicionar dropout.
-        if (epoch + 1) % 10 == 0 or epoch == 0:
-            logger.info(
-                "Época [{}/{}] | Loss Treino: {:.4f} | Loss Val: {:.4f}",
-                epoch + 1, cfg.mlp.epochs,
-                train_loss / len(train_loader),   # Média da loss por batch de treino
-                val_loss / len(val_loader),        # Média da loss por batch de validação
+            # --- FASE DE TREINO ---
+            # model.train() ativa comportamentos específicos do treino:
+            # - Dropout está ATIVO (desliga neurônios aleatoriamente)
+            # - BatchNorm (se houver) usa estatísticas do batch atual
+            model.train()
+            train_loss = 0.0
+
+            for batch_x, batch_y in train_loader:
+                optimizer.zero_grad()           # Zera os gradientes do passo anterior
+                loss = criterion(model(batch_x), batch_y)  # Calcula a perda
+                loss.backward()                 # Backpropagation: calcula gradientes
+                optimizer.step()               # Atualiza os pesos com base nos gradientes
+                train_loss += loss.item()      # Acumula a perda para calcular a média
+
+            # --- FASE DE VALIDAÇÃO ---
+            # model.eval() desativa dropout e usa estatísticas fixas do BatchNorm.
+            # torch.no_grad() desabilita o cálculo de gradientes — não precisamos
+            # deles aqui, o que economiza memória e acelera o cálculo.
+            model.eval()
+            val_loss = 0.0
+            with torch.no_grad():
+                for batch_x, batch_y in val_loader:
+                    val_loss += criterion(model(batch_x), batch_y).item()
+
+            # Calcula as perdas médias por batch para esta época.
+            avg_train_loss = train_loss / len(train_loader)
+            avg_val_loss = val_loss / len(val_loader)
+
+            # --- Log de Métricas por Época no MLflow ---
+            # O parâmetro `step=epoch` é fundamental: ele informa ao MLflow
+            # que esta métrica pertence ao passo (época) N, não a um valor único.
+            # Isso permite que a UI do MLflow gere gráficos de linha mostrando
+            # a evolução do aprendizado ao longo do tempo.
+            mlflow.log_metrics(
+                {
+                    "train_loss": avg_train_loss,
+                    "val_loss": avg_val_loss,
+                },
+                step=epoch,
             )
 
-    # 7. Salvamento do Modelo
-    # torch.save salva o state_dict — um dicionário com todos os pesos
-    # (tensores) do modelo. Salvamos apenas os pesos, não a arquitetura
-    # inteira, pois a arquitetura é reconstruída pela classe ChurnMLP.
-    # Ao carregar, deve-se instanciar ChurnMLP com o mesmo input_dim e
-    # hidden_dims, e então chamar model.load_state_dict().
-    model_path = out_dir / "mlp_model.pth"
-    torch.save(model.state_dict(), model_path)
-    logger.success("Rede Neural treinada! Modelo salvo em: {}", model_path)
+            # Loga o progresso a cada 10 épocas (ou na primeira) no terminal.
+            # Se a val_loss estiver AUMENTANDO enquanto a train_loss diminui,
+            # é sinal de overfitting — considere reduzir épocas ou adicionar dropout.
+            if (epoch + 1) % 10 == 0 or epoch == 0:
+                logger.info(
+                    "Época [{}/{}] | Loss Treino: {:.4f} | Loss Val: {:.4f}",
+                    epoch + 1, cfg.mlp.epochs,
+                    avg_train_loss,
+                    avg_val_loss,
+                )
+
+        # 8. Log do Modelo Final no MLflow
+        # Preparamos um exemplo de entrada para que o MLflow possa inferir
+        # a assinatura (schema) do modelo automaticamente.
+        model.eval()
+        with torch.no_grad():
+            example_input = X_train_t[:5]  # Amostra pequena para inferência de schema
+            example_output = torch.sigmoid(model(example_input)).numpy()
+
+        # infer_signature analisa o tensor de entrada e a saída (probabilidades)
+        # e gera automaticamente o contrato de I/O do modelo.
+        signature = infer_signature(
+            example_input.numpy(),
+            example_output,
+        )
+
+        # mlflow.pytorch.log_model salva o modelo PyTorch completo como
+        # artefato da run. O MLflow garante que as dependências (versão do
+        # PyTorch) sejam registradas junto para reprodutibilidade futura.
+        mlp_model_info = mlflow.pytorch.log_model(
+            pytorch_model=model,
+            artifact_path="mlp_model",
+            signature=signature,
+            registered_model_name="ChurnMLP" if cfg.mlflow.register_model else None,
+        )
+
+        logger.success(
+            "MLflow | Modelo MLP registrado em: {}",
+            mlp_model_info.model_uri,
+        )
+
+        # 9. Salvamento Legado do Modelo (compatibilidade)
+        # Mantemos o torch.save() para compatibilidade com evaluate_models.py
+        # e quaisquer scripts que ainda dependam do arquivo .pth local.
+        model_path = out_dir / "mlp_model.pth"
+        torch.save(model.state_dict(), model_path)
+        logger.success("Rede Neural treinada! Modelo salvo em: {}", model_path)
 
 
 if __name__ == "__main__":
