@@ -29,7 +29,7 @@ build/
 # MLFLOW & MODELOS TREINADOS
 # ==========================================
 mlruns/
-models/
+/models/
 *.pkl
 *.h5
 *.joblib

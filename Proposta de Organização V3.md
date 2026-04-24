@@ -26,7 +26,7 @@
 * **Denis (Engenharia de Dados):** Desenvolver o pipeline de pré-processamento via Scikit-Learn, garantindo a modularização das funções de limpeza e transformação na pasta `src/`. CONCLUÍDO
 * **Fábio (Modelagem Baseline):** Treinar modelos baseline (`DummyClassifier` e `LogisticRegression`) utilizando **validação cruzada estratificada**. Registrar os experimentos no MLflow. EM ANDAMENTO
 * **Bill (Deep Learning):** Construir e treinar a **Rede Neural (MLP)** com PyTorch, implementando loop de treinamento com *batching* e técnica de *early stopping*. CONCLUÍDO
-* **Bill (Documentação):** Atualizar. EM ANDAMENTO
+* **Bill (Documentação):** Atualizar. ECONCLUÍDO
 * **Bill (Otimização do modelo):** Atualizar. EM ANDAMENTO
 * **📦 Entrega da Fase 1:** Notebook de EDA, scripts de treinamento e tabela comparativa de modelos registrada no MLflow.
 
