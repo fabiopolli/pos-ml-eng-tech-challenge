@@ -126,9 +126,17 @@ python src/models/evaluate_models.py
 
 ### Visualizar Resultados no MLflow
 ```bash
-mlflow ui
+O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode comparar métricas entre runs, analisar parâmetros e gerenciar o **Model Registry** (versionamento de modelos para produção).
+
+### API de Predição (FastAPI)
+```bash
+# Sincronizar ambiente (caso necessário)
+uv sync --all-extras
+
+# Rodar o servidor da API
+uv run uvicorn ml-churn-api.app.main:app --reload
 ```
-O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode comparar métricas entre runs, analisar parâmetros e baixar modelos treinados.
+A API estará disponível em `http://localhost:8000`. Acesse `/docs` para a documentação interativa (Swagger).
 
 ### Dashboard Interativo (Streamlit)
 ```bash
@@ -217,6 +225,9 @@ As dependências estão organizadas em `pyproject.toml`:
 ## 📚 Recursos Adicionais
 
 - **ML Canvas:** Documentação de negócio em `docs/`
+- **Relatório de Implementação:** Detalhes técnicos em `docs/relatorio_de_implementacao.md`
+- **Guia da API FastAPI:** Manual de uso da API em `docs/guia_api_fastapi.md`
+- **Tutorial MLflow:** Guia rápido para o time em `docs/tutorial_mlflow.md`
 - **FIAP Tech Challenge:** [Link do desafio]
 - **MLflow Docs:** https://mlflow.org/docs/latest/index.html
 - **Scikit-learn:** https://scikit-learn.org/

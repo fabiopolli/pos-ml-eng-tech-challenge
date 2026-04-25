@@ -136,11 +136,11 @@ def auto_load_model() -> bool:
     Returns:
         bool: True se carregou com sucesso
     """
-    # Tenta carregar modelo .pkl primeiro
-    pkl_path = MODELS_DIR / "churn_model.pkl"
+    # Tenta carregar modelo .pkl primeiro (Logística)
+    pkl_path = MODELS_DIR / "logistic_model.pkl"
     if pkl_path.exists():
         logger.info(f"Carregando modelo: {pkl_path}")
-        return load_model("churn_model.pkl")
+        return load_model("logistic_model.pkl")
     
     # Tenta wrapper PyTorch
     mlp_pkl = MODELS_DIR / "mlp_model.pkl"
@@ -160,62 +160,9 @@ def auto_load_model() -> bool:
 
 
 # ============================================================
-# EXEMPLO: Como preparar seus dados para o modelo
+# O prepare_features foi substituído pelo inference_preprocessor.py
+# para resolver o Training-Serving Skew.
 # ============================================================
-
-def prepare_features(data: dict) -> list:
-    """
-    Prepara features para inferência.
-    
-    Este é um exemplo de como transformar os dados de entrada
-    no formato esperado pelo modelo.
-    
-    Args:
-        data: Dicionário com dados do cliente
-        
-    Returns:
-        list: Features no formato do modelo
-    """
-    # Mapeamento de contract_type
-    contract_map = {
-        "month": [1, 0, 0],
-        "one_year": [0, 1, 0],
-        "two_year": [0, 0, 1]
-    }
-    
-    # Mapeamento de payment_method
-    payment_map = {
-        "credit_card": [1, 0, 0, 0],
-        "debit_card": [0, 1, 0, 0],
-        "electronic_check": [0, 0, 1, 0],
-        "bank_transfer": [0, 0, 0, 1]
-    }
-    
-    features = [
-        data.get("tenure", 0),
-        data.get("monthly_charges", 0),
-        data.get("total_charges", 0),
-    ]
-    
-    # Adicionar one-hot encoding de contract_type
-    features.extend(contract_map.get(data.get("contract_type", "month"), [1, 0, 0]))
-    
-    # Adicionar one-hot encoding de payment_method
-    features.extend(payment_map.get(data.get("payment_method", "credit_card"), [1, 0, 0, 0]))
-    
-    # Features booleanas
-    features.extend([
-        int(data.get("has_phone_service", False)),
-        int(data.get("has_internet_service", False)),
-        int(data.get("has_online_security", False)),
-        int(data.get("has_online_backup", False)),
-        int(data.get("has_device_protection", False)),
-        int(data.get("has_tech_support", False)),
-        int(data.get("streaming_tv", False)),
-        int(data.get("streaming_movies", False)),
-    ])
-    
-    return features
 
 
 # ============================================================

@@ -15,8 +15,12 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     
     # Model
-    model_path: str = "models/churn_model.pkl"
+    model_path: str = "models/logistic_model.pkl"  # Arquivo físico de fallback
     model_version: str = "1.0.0"
+    
+    # MLflow
+    mlflow_tracking_uri: str = "mlruns"
+    mlflow_model_name: str = "ChurnLogisticRegression"
     
     # Server
     host: str = "0.0.0.0"

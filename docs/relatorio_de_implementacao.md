@@ -85,13 +85,29 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 
 ---
 
-## 8. Ferramentas Utilizadas
+## 9. Disponibilização via API (FastAPI)
+
+**O que foi feito:** Criamos uma API REST robusta para servir as predições de churn em tempo real.
+
+**Por que foi feito:**
+- **Consumo:** Permite que outros sistemas (mobile, CRM, web) consultem o modelo via HTTP.
+- **Padronização:** Uso de Pydantic para garantir que as entradas e saídas sigam um contrato rigoroso.
+
+**Como foi feito:**
+- **Arquitetura:** Organizada em rotas (`/predict`), serviços e esquemas de dados.
+- **Prevenção de Skew:** Implementamos o `inference_preprocessor.py` que reutiliza a lógica oficial do `data_prep.py`. Isso garante que as transformações de engenharia de features e o One-Hot Encoding sejam idênticos ao que foi visto no treinamento, evitando erros de predição.
+- **Registry Integration:** A API tenta carregar o modelo mais recente (`latest`) diretamente do MLflow Model Registry, com fallback automático para o arquivo local se necessário.
+
+---
+
+## 10. Ferramentas Utilizadas
 
 - **UV:** Gerenciador de pacotes ultra-rápido para garantir que todos no time usem as mesmas versões de biblioteca.
+- **FastAPI:** Framework moderno e de alta performance para construção de APIs.
 - **MLflow:** Gestão de experimentos, métricas e registro de modelos.
 - **Loguru:** Substituímos o `print` por logs estruturados, facilitando o debug em ambientes de produção.
 - **Pathlib:** Garante que o código funcione tanto em Windows quanto Linux/Mac, tratando caminhos de arquivos de forma inteligente.
 
 ---
-**Data de Atualização:** 24 de Abril de 2026
+**Data de Atualização:** 25 de Abril de 2026
 **Responsável:** Agent <Data> (Auxiliando Bill)

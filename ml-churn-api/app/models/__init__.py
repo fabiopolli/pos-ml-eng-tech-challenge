@@ -3,9 +3,9 @@ from .model_loader import (
     get_model,
     load_model,
     auto_load_model,
-    prepare_features,
     get_mock_model,
 )
+from .inference_preprocessor import preprocess_input
 from .pytorch_wrapper import (
     PyTorchModelWrapper,
     convert_pth_to_pkl,
@@ -16,7 +16,7 @@ __all__ = [
     "get_model",
     "load_model",
     "auto_load_model",
-    "prepare_features",
+    "preprocess_input",
     "get_mock_model",
     "PyTorchModelWrapper",
     "convert_pth_to_pkl",
