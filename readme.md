@@ -164,9 +164,9 @@ O corpo da requisição (`JSON body`) deve conter os seguintes campos:
 
 | Campo | Tipo | Descrição | Intervalo / Opções |
 | :--- | :--- | :--- | :--- |
-| `tenure` | `int` | Meses de permanência do cliente | `0` a `72` |
-| `monthly_charges` | `float` | Valor da mensalidade atual | `18.25` a `118.75` |
-| `total_charges` | `float` | Gasto total acumulado | `18.80` a `8684.80` |
+| `tenure` | `int` | Meses de permanência do cliente | `0` a `120` |
+| `monthly_charges` | `float` | Valor da mensalidade atual | `0` a `500.0` |
+| `total_charges` | `float` | Gasto total acumulado | `0` a `50000.0` |
 | `contract_type` | `str` | Tipo de contrato do cliente | `monthly`, `one_year`, `two_year` |
 | `payment_method` | `str` | Método de pagamento | `credit_card`, `debit_card`, `electronic_check`, `bank_transfer` |
 | `has_phone_service` | `bool` | Se possui serviço de telefone | `true` ou `false` |

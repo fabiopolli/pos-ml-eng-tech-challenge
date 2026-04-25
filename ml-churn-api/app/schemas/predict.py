@@ -1,14 +1,24 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 
 
 class PredictInput(BaseModel):
     """Schema para dados de entrada da predição."""
-    tenure: int = Field(..., ge=0, description="Tempo de permanência do cliente em meses")
-    monthly_charges: float = Field(..., ge=0, description="Valor da mensalidade")
-    total_charges: float = Field(..., ge=0, description="Valor total gasto")
-    contract_type: str = Field(..., description="Tipo de contrato: monthly, one_year, two_year")
-    payment_method: str = Field(..., description="Método de pagamento")
+    tenure: int = Field(
+        ..., ge=0, le=120, description="Tempo de permanência do cliente em meses (0-120)"
+    )
+    monthly_charges: float = Field(
+        ..., ge=0, le=500, description="Valor da mensalidade (0-500)"
+    )
+    total_charges: float = Field(
+        ..., ge=0, le=50000, description="Valor total gasto (0-50000)"
+    )
+    contract_type: Literal["monthly", "one_year", "two_year"] = Field(
+        ..., description="Tipo de contrato"
+    )
+    payment_method: Literal["credit_card", "debit_card", "electronic_check", "bank_transfer"] = Field(
+        ..., description="Método de pagamento"
+    )
     has_phone_service: bool = Field(default=True, description="Possui serviço de telefone")
     has_internet_service: bool = Field(default=True, description="Possui serviço de internet")
     has_online_security: bool = Field(default=False, description="Possui segurança online")
