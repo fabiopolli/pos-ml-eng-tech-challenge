@@ -37,9 +37,9 @@ Através da análise de correlação, identificamos que o risco de churn é maio
 
 Para que os modelos funcionem corretamente, seguimos estes pilares:
 
-1.  **Limpeza:** Remoção do `customerID` (não ajuda a prever comportamento) e correção de tipos numéricos.
-2.  **Codificação (Encoding):** Transformamos textos (Ex: "Sim", "Não", "Fibra Óptica") em números (0, 1) usando *One-Hot Encoding*. Sem isso, os modelos matemáticos não conseguem processar as informações.
-3.  **Escalonamento (Scaling):** Usamos o `StandardScaler`. Como temos variáveis com escalas muito diferentes (ex: `tenure` de 0-72 vs `TotalCharges` de 0-8000), o escalonamento garante que nenhuma variável "atropele" a outra durante o aprendizado da rede neural.
+2.  **Validação (Pandera):** Implementamos o "Fail Fast" com schemas rigorosos para garantir que o dataset bruto respeita o contrato esperado antes de qualquer transformação.
+3.  **Codificação (Encoding):** Transformamos textos (Ex: "Sim", "Não", "Fibra Óptica") em números (0, 1) usando *One-Hot Encoding*. Sem isso, os modelos matemáticos não conseguem processar as informações.
+4.  **Escalonamento (Scaling):** Usamos o `StandardScaler`. Como temos variáveis com escalas muito diferentes (ex: `tenure` de 0-72 vs `TotalCharges` de 0-8000), o escalonamento garante que nenhuma variável "atropele" a outra durante o aprendizado da rede neural.
 
 ---
 
@@ -62,7 +62,8 @@ Criamos 5 novas variáveis para ajudar o modelo a entender o comportamento do cl
 Dividimos nossa abordagem em duas frentes para garantir robustez:
 
 1.  **Baselines (Simples):** Usamos Regressão Logística para ter uma métrica de comparação rápida. Se a Rede Neural não for melhor que isso, não vale a complexidade.
-2.  **Deep Learning (Complexo):** Criamos uma MLP (Rede Neural) em PyTorch para capturar relações não-lineares que modelos simples podem perder.
+2.  **Deep Learning (Complexo):** Criamos uma MLP (Rede Neural) em PyTorch para capturar relações não-lineares.
+3.  **Foco Financeiro:** Além de AUC-ROC, priorizamos a **Economia Estimada (Savings)**, comparando o custo de perda de churners versus o custo de campanhas de retenção proativa.
 
 ---
 **Documento atualizado em:** 23 de Abril de 2026

@@ -27,7 +27,7 @@ ml-churn-api/
 
 Quando um cliente envia um JSON para o endpoint `/predict`, o seguinte fluxo ocorre:
 
-1.  **Validação (Schemas):** O FastAPI utiliza o `PredictInput` (Pydantic) para validar se todos os campos (tenure, monthly_charges, etc.) estão presentes e com tipos corretos.
+1.  **Validação (Schemas):** O FastAPI utiliza o `PredictInput` (Pydantic) para validar se todos os campos estão presentes. Implementamos limites flexíveis para evitar erros com novos dados (ex: `tenure` até 120 meses, `monthly_charges` até $500). Além disso, usamos `Literal` para garantir que os tipos de contrato e pagamento sejam exatamente os esperados pela API.
 2.  **Orquestração (Service):** O `model_service.py` recebe os dados validados e gera um `request_id` único para rastreamento.
 3.  **Preprocessamento de Inferência:** 
     - O `inference_preprocessor.py` entra em ação.
@@ -54,6 +54,7 @@ Quando um cliente envia um JSON para o endpoint `/predict`, o seguinte fluxo oco
 As exceções são capturadas por handlers globais em `app/exceptions/handlers.py`, garantindo que o cliente receba sempre um JSON padronizado com o erro, em vez de um "Internal Server Error" genérico ou uma stack trace exposta.
 
 ### 🔍 Monitoramento (Health Check)
+- `/`: Redireciona automaticamente para a documentação interativa (/docs).
 - `/api/v1/health`: Retorna se a API está de pé.
 - `/api/v1/health/detailed`: Verifica se o modelo foi carregado corretamente e está pronto para inferência.
 
@@ -65,7 +66,7 @@ As exceções são capturadas por handlers globais em `app/exceptions/handlers.p
 Certifique-se de estar na raiz do projeto e use o `uv`:
 
 ```bash
-uv run uvicorn ml-churn-api.app.main:app --reload
+uv run uvicorn app.main:app --app-dir ml-churn-api --reload
 ```
 
 ### Documentação Interativa

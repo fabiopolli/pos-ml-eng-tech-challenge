@@ -10,12 +10,15 @@ Você não precisa mudar nada no seu fluxo de trabalho. Ao rodar o pipeline prin
 
 ```bash
 make run
+# OU via MLflow CLI direto:
+mlflow run . --env-manager=local
 ```
 
 O que acontece nos bastidores:
-1. Uma run chamada `baseline_run` é criada para os modelos Dummy e Regressão Logística.
-2. Uma run chamada `mlp_run` é criada para a Rede Neural.
-3. Os parâmetros (ex: taxa de aprendizado, épocas) e as métricas são enviados para a pasta local `mlruns/`.
+1. O arquivo `MLproject` define os pontos de entrada (`main`, `train_mlp`, etc.).
+2. Ao rodar via `mlflow run`, uma "Run Pai" é criada.
+3. Cada etapa do pipeline (`baseline_run`, `mlp_run`) é criada como uma **Nested Run** (run aninhada) dentro dessa principal.
+4. Os parâmetros e métricas são enviados para a pasta local `mlruns/`.
 
 ---
 
