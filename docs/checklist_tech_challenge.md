@@ -6,7 +6,7 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 - [x] Criar estrutura de pastas padrão: `src/`, `data/`, `models/`, `tests/`, `notebooks/`, `docs/`.
 - [x] Configurar `pyproject.toml` como única fonte de verdade para dependências.
 - [x] Configurar `.gitignore` (ignorar arquivos `.env`, pastas de dados pesados e `__pycache__`).
-- [ ] Garantir histórico de commits limpo (mensagens claras e commits frequentes).
+- [x] Garantir histórico de commits limpo (mensagens claras e commits frequentes).
 - [x] Configurar Linting e Formatação (Ruff).
 - [x] Implementar Logging estruturado (substituindo todos os `print()`).
 - [x] Fixar sementes (seeds) para reprodutibilidade total.
@@ -15,16 +15,16 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 ## 📊 2. Etapa 1: Entendimento e Preparação (EDA & Baseline)
 - [ ] Preencher ML Canvas (Stakeholders, Métricas, SLOs).
 - [x] Notebook de EDA: Análise de volume, qualidade e correlação das features.
-- [ ] Definir métrica técnica (ex: AUC-ROC) e métrica de negócio (ex: economia de churn).
+- [x] Definir métrica técnica (ex: AUC-ROC) e métrica de negócio (ex: economia de churn).
 - [x] Implementar Baselines com Scikit-Learn (Dummy e Regressão Logística).
 - [x] Configurar rastreamento inicial no MLflow.
 
 ## 🧠 3. Etapa 2: Modelagem com Redes Neurais (PyTorch)
 - [x] Implementar arquitetura MLP (Multi-Layer Perceptron) no PyTorch.
-- [ ] Implementar Loop de Treinamento com Batching e Early Stopping.
-- [ ] Realizar Validação Cruzada Estratificada.
+- [x] Implementar Loop de Treinamento com Batching e Early Stopping.
+- [x] Realizar Validação Cruzada Estratificada.
 - [x] Comparar MLP vs Baselines (mínimo 4 métricas).
-- [ ] Realizar análise de custo/benefício (Trade-off de erros).
+- [x] Realizar análise de custo/benefício (Trade-off de erros).
 - [x] Registrar todos os experimentos da MLP no MLflow.
 
 ## ⚙️ 4. Etapa 3: Engenharia e API (FastAPI)

@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 import torch
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_auc_score
 
 # Garante que a raiz do projeto esteja no path para imports absolutos (src.*)
 BASE_DIR = Path(__file__).resolve().parent.parent  # front/ → raiz/
@@ -118,10 +118,11 @@ def load_base_data():
 raw_df, processed_df = load_base_data()
 
 if raw_df is not None:
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "📊 Análise Exploratória (EDA)",
         "📈 Engenharia de Dados",
         "🎯 Performance dos Modelos",
+        "💰 Custo-Benefício"
     ])
 
     with tab1:
@@ -238,32 +239,38 @@ if raw_df is not None:
                 m_mlp_obj.eval()
 
                 y_pred_dummy = m_dummy_obj.predict(X_test)
+                y_prob_dummy = m_dummy_obj.predict_proba(X_test)[:, 1]
+                
                 y_pred_lr = m_lr_obj.predict(X_test)
+                y_prob_lr = m_lr_obj.predict_proba(X_test)[:, 1]
+                
                 X_test_t = torch.tensor(X_test.astype(np.float32).values, dtype=torch.float32)
                 with torch.no_grad():
-                    y_pred_mlp = (
-                        torch.sigmoid(m_mlp_obj(X_test_t)) > 0.5
-                    ).int().numpy().flatten()
+                    probs_mlp = torch.sigmoid(m_mlp_obj(X_test_t))
+                    y_prob_mlp = probs_mlp.numpy().flatten()
+                    y_pred_mlp = (probs_mlp > 0.5).int().numpy().flatten()
 
-                def calc_metrics(y_true, y_pred):
+                def calc_metrics(y_true, y_pred, y_prob):
                     p, r, f, _ = precision_recall_fscore_support(
                         y_true, y_pred, average="binary", zero_division=0
                     )
                     acc = accuracy_score(y_true, y_pred)
-                    return {"Acurácia": acc, "Precisão": p, "Recall": r, "F1-Score": f}
+                    auc = roc_auc_score(y_true, y_prob)
+                    return {"Acurácia": acc, "Precisão": p, "Recall": r, "F1-Score": f, "AUC-ROC": auc}
 
                 res = pd.DataFrame({
-                    "Dummy Baseline": calc_metrics(y_test, y_pred_dummy),
-                    "LogReg (Balanced)": calc_metrics(y_test, y_pred_lr),
-                    "Neural Net (MLP)": calc_metrics(y_test, y_pred_mlp),
+                    "Dummy Baseline": calc_metrics(y_test, y_pred_dummy, y_prob_dummy),
+                    "LogReg (Balanced)": calc_metrics(y_test, y_pred_lr, y_prob_lr),
+                    "Neural Net (MLP)": calc_metrics(y_test, y_pred_mlp, y_prob_mlp),
                 }).T
 
                 st.subheader("Cockpit de Métricas")
-                c1, c2, c3 = st.columns(3)
+                c1, c2, c3, c4 = st.columns(4)
                 best_model = res["Recall"].idxmax()
                 c1.metric("Melhor Recall", f"{res['Recall'].max():.2%}", f"Modelo: {best_model}")
                 c2.metric("Melhor F1-Score", f"{res['F1-Score'].max():.2%}", f"Modelo: {res['F1-Score'].idxmax()}")
-                c3.metric("Acurácia MLP", f"{res.loc['Neural Net (MLP)', 'Acurácia']:.2%}")
+                c3.metric("Melhor AUC-ROC", f"{res['AUC-ROC'].max():.2f}", f"Modelo: {res['AUC-ROC'].idxmax()}")
+                c4.metric("Acurácia MLP", f"{res.loc['Neural Net (MLP)', 'Acurácia']:.2%}")
 
                 st.markdown("---")
                 st.subheader("Comparativo Gráfico de Desempenho")
@@ -288,6 +295,54 @@ if raw_df is not None:
                 )
         else:
             st.warning("⚠️ Modelos não detectados em `/models`. Por favor, execute os scripts de treinamento primeiro.")
+
+    with tab4:
+        st.header("💰 Análise de Custo-Benefício (Trade-off de Erros)")
+        st.markdown("Simule o impacto financeiro de cada modelo ajustando os custos de retenção e o valor do cliente.")
+        
+        c_retencao, c_ticket = st.columns(2)
+        with c_retencao:
+            custo_retencao = st.slider("Custo da Campanha de Retenção ($)", min_value=10.0, max_value=100.0, value=30.0, step=5.0)
+            st.caption("Quanto custa oferecer um desconto ou benefício para evitar o cancelamento?")
+        with c_ticket:
+            ticket_medio = st.slider("Ticket Médio Mensal (ARPU) ($)", min_value=30.0, max_value=200.0, value=70.0, step=10.0)
+            st.caption("Qual a receita média mensal que a empresa perde quando o cliente cancela?")
+
+        st.markdown("---")
+
+        if all(p.exists() for p in [path_dummy, path_lr, path_mlp]):
+            try:
+                from sklearn.metrics import confusion_matrix
+                
+                def calc_savings(y_true, y_pred):
+                    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+                    custo_sem_modelo = (tp + fn) * ticket_medio
+                    custo_com_modelo = ((tp + fp) * custo_retencao) + (fn * ticket_medio)
+                    return custo_sem_modelo - custo_com_modelo
+
+                savings_df = pd.DataFrame({
+                    "Modelo": ["Dummy Baseline", "LogReg (Balanced)", "Neural Net (MLP)"],
+                    "Economia Estimada ($)": [
+                        calc_savings(y_test, y_pred_dummy),
+                        calc_savings(y_test, y_pred_lr),
+                        calc_savings(y_test, y_pred_mlp),
+                    ]
+                })
+
+                st.subheader("Comparativo de Economia (Savings)")
+                fig_sav, ax_sav = plt.subplots(figsize=(8, 4))
+                sns.barplot(x="Modelo", y="Economia Estimada ($)", data=savings_df, palette="viridis", ax=ax_sav)
+                ax_sav.set_title("Economia Gerada vs Fazer Nada (Perder todos os Churners)")
+                ax_sav.set_ylabel("Economia ($)")
+                st.pyplot(fig_sav)
+
+                best_saving_model = savings_df.loc[savings_df["Economia Estimada ($)"].idxmax()]
+                st.success(f"🏆 O modelo **{best_saving_model['Modelo']}** gera a maior economia para a empresa, poupando **${best_saving_model['Economia Estimada ($)']:,.2f}** no conjunto de teste com as premissas atuais.")
+                
+            except NameError:
+                st.warning("As predições ainda não foram geradas. Acesse a aba de Performance dos Modelos primeiro.")
+        else:
+             st.warning("⚠️ Modelos não detectados em `/models`.")
 
 else:
     st.error("Dataset não encontrado em data/raw/Telco-Customer-Churn.csv")

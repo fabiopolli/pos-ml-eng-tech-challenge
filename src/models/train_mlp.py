@@ -47,6 +47,8 @@ from loguru import logger
 from mlflow.models.signature import infer_signature
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
+import copy
+from sklearn.model_selection import StratifiedKFold
 
 from src.models.config import PipelineConfig
 from src.models.data_utils import get_data_splits, set_seed
@@ -145,6 +147,79 @@ class ChurnMLP(nn.Module):
         return self.network(x)
 
 
+
+def train_model_with_early_stopping(
+    model: nn.Module,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: optim.Optimizer,
+    epochs: int,
+    patience: int,
+    log_to_mlflow: bool = False
+) -> tuple[float, float]:
+    """
+    Treina o modelo com Early Stopping e retorna as melhores perdas.
+    Se log_to_mlflow=True, loga as perdas por época no MLflow.
+    """
+    best_val_loss = float("inf")
+    best_train_loss = float("inf")
+    best_model_state = None
+    patience_counter = 0
+
+    for epoch in range(epochs):
+        # --- FASE DE TREINO ---
+        model.train()
+        train_loss = 0.0
+        for batch_x, batch_y in train_loader:
+            optimizer.zero_grad()
+            loss = criterion(model(batch_x), batch_y)
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
+
+        # --- FASE DE VALIDAÇÃO ---
+        model.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for batch_x, batch_y in val_loader:
+                val_loss += criterion(model(batch_x), batch_y).item()
+
+        avg_train_loss = train_loss / len(train_loader)
+        avg_val_loss = val_loss / len(val_loader)
+
+        if log_to_mlflow:
+            mlflow.log_metrics(
+                {"train_loss": avg_train_loss, "val_loss": avg_val_loss},
+                step=epoch,
+            )
+
+            if (epoch + 1) % 10 == 0 or epoch == 0:
+                logger.info(
+                    "Época [{}/{}] | Loss Treino: {:.4f} | Loss Val: {:.4f} | Paciência: {}/{}",
+                    epoch + 1, epochs, avg_train_loss, avg_val_loss, patience_counter, patience
+                )
+
+        # EARLY STOPPING CHECK
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            best_train_loss = avg_train_loss
+            best_model_state = copy.deepcopy(model.state_dict())
+            patience_counter = 0
+        else:
+            patience_counter += 1
+
+        if patience_counter >= patience:
+            if log_to_mlflow:
+                logger.info("Early stopping disparado na época {}! Melhor Val Loss: {:.4f}", epoch + 1, best_val_loss)
+            break
+
+    # Restaura os melhores pesos
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+
+    return best_train_loss, best_val_loss
+
 def main(
     data_path: Path | None = None,
     models_dir: Path | None = None,
@@ -193,55 +268,17 @@ def main(
     # converte para o formato que a GPU/CPU da rede entende.
     # float32 é o tipo numérico padrão para redes neurais (float64 é
     # desnecessariamente pesado e não traz ganho de precisão aqui).
-    X_train_t = torch.tensor(X_train.astype(np.float32).values, dtype=torch.float32)
-    y_train_t = torch.tensor(y_train.values, dtype=torch.float32).view(-1, 1)
-    X_val_t = torch.tensor(X_val.astype(np.float32).values, dtype=torch.float32)
-    y_val_t = torch.tensor(y_val.values, dtype=torch.float32).view(-1, 1)
-    # .view(-1, 1) remodela o vetor de targets para shape (N, 1),
-    # que é o formato esperado pelo BCEWithLogitsLoss.
-
-    # 4. DataLoaders
-    # Em vez de treinar com todos os dados de uma vez (o que pode exceder
-    # a memória), dividimos em "batches" (lotes). O DataLoader faz isso
-    # automaticamente. shuffle=True embaralha os batches a cada época
-    # para evitar que a rede memorize a ordem dos dados.
-    train_loader = DataLoader(
-        TensorDataset(X_train_t, y_train_t),
-        batch_size=cfg.mlp.batch_size,
-        shuffle=True,  # Embaralha o treino a cada época
-    )
-    val_loader = DataLoader(
-        TensorDataset(X_val_t, y_val_t),
-        batch_size=cfg.mlp.batch_size,
-        shuffle=False,  # Validação não precisa ser embaralhada
-    )
-
-    # 5. Instanciação do Modelo, Função de Perda e Otimizador
-    model = ChurnMLP(
-        input_dim=X_train.shape[1],       # Número de features de entrada
-        hidden_dims=cfg.mlp.hidden_dims,
-        dropout_rate=cfg.mlp.dropout_rate,
-    )
-
-    # BCEWithLogitsLoss: "Binary Cross-Entropy with Logits".
-    # É a função de perda padrão para classificação binária com PyTorch.
-    # Mede o quão erradas são as predições. Quanto menor, melhor.
-    criterion = nn.BCEWithLogitsLoss()
-
-    # Adam: algoritmo de otimização moderno que adapta a taxa de aprendizado
-    # automaticamente para cada parâmetro. É a escolha padrão para MLP.
-    optimizer = optim.Adam(model.parameters(), lr=cfg.mlp.learning_rate)
+    X_train_np = X_train.astype(np.float32).values
+    y_train_np = y_train.values
 
     # =========================================================================
-    # 6. Configuração do MLflow e Loop de Treinamento
+    # 3. Configuração do MLflow e Loop de Treinamento
     # =========================================================================
     mlflow.set_experiment(cfg.mlflow.experiment_name)
 
     with mlflow.start_run(run_name="mlp_run"):
 
         # --- Log de Parâmetros ---
-        # Registramos TODOS os hiperparâmetros da MLP para que cada run
-        # seja completamente reproduzível e comparável na UI do MLflow.
         mlflow.log_params({
             "seed": cfg.seed,
             "hidden_dims": str(cfg.mlp.hidden_dims),
@@ -250,67 +287,75 @@ def main(
             "batch_size": cfg.mlp.batch_size,
             "learning_rate": cfg.mlp.learning_rate,
             "input_dim": X_train.shape[1],
+            "early_stopping_patience": cfg.mlp.early_stopping_patience,
+            "cv_folds": cfg.mlp.cv_folds,
         })
 
-        logger.info(
-            "Iniciando treinamento | épocas={} | batch={} | lr={}",
-            cfg.mlp.epochs, cfg.mlp.batch_size, cfg.mlp.learning_rate,
+        # --- 4. Validação Cruzada Estratificada ---
+        logger.info("Iniciando {}-Fold Stratified CV...", cfg.mlp.cv_folds)
+        skf = StratifiedKFold(n_splits=cfg.mlp.cv_folds, shuffle=True, random_state=cfg.seed)
+        cv_val_losses = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(X_train_np, y_train_np)):
+            X_fold_train = torch.tensor(X_train_np[train_idx], dtype=torch.float32)
+            y_fold_train = torch.tensor(y_train_np[train_idx], dtype=torch.float32).view(-1, 1)
+            X_fold_val = torch.tensor(X_train_np[val_idx], dtype=torch.float32)
+            y_fold_val = torch.tensor(y_train_np[val_idx], dtype=torch.float32).view(-1, 1)
+
+            fold_train_loader = DataLoader(TensorDataset(X_fold_train, y_fold_train), batch_size=cfg.mlp.batch_size, shuffle=True)
+            fold_val_loader = DataLoader(TensorDataset(X_fold_val, y_fold_val), batch_size=cfg.mlp.batch_size, shuffle=False)
+
+            model_fold = ChurnMLP(input_dim=X_train.shape[1], hidden_dims=cfg.mlp.hidden_dims, dropout_rate=cfg.mlp.dropout_rate)
+            criterion_fold = nn.BCEWithLogitsLoss()
+            optimizer_fold = optim.Adam(model_fold.parameters(), lr=cfg.mlp.learning_rate)
+
+            _, fold_best_val = train_model_with_early_stopping(
+                model=model_fold,
+                train_loader=fold_train_loader,
+                val_loader=fold_val_loader,
+                criterion=criterion_fold,
+                optimizer=optimizer_fold,
+                epochs=cfg.mlp.epochs,
+                patience=cfg.mlp.early_stopping_patience,
+                log_to_mlflow=False
+            )
+            cv_val_losses.append(fold_best_val)
+            logger.debug("Fold {} | Val Loss: {:.4f}", fold + 1, fold_best_val)
+
+        mean_cv_loss = np.mean(cv_val_losses)
+        logger.info("Fim da Validação Cruzada | Média Val Loss: {:.4f}", mean_cv_loss)
+        mlflow.log_metric("cv_mean_val_loss", mean_cv_loss)
+
+        # --- 5. Treinamento do Modelo Final (com Early Stopping) ---
+        logger.info("Treinando Modelo Final na partição de treino completa...")
+
+        X_train_t = torch.tensor(X_train_np, dtype=torch.float32)
+        y_train_t = torch.tensor(y_train_np, dtype=torch.float32).view(-1, 1)
+        X_val_t = torch.tensor(X_val.astype(np.float32).values, dtype=torch.float32)
+        y_val_t = torch.tensor(y_val.values, dtype=torch.float32).view(-1, 1)
+
+        train_loader = DataLoader(TensorDataset(X_train_t, y_train_t), batch_size=cfg.mlp.batch_size, shuffle=True)
+        val_loader = DataLoader(TensorDataset(X_val_t, y_val_t), batch_size=cfg.mlp.batch_size, shuffle=False)
+
+        model = ChurnMLP(input_dim=X_train.shape[1], hidden_dims=cfg.mlp.hidden_dims, dropout_rate=cfg.mlp.dropout_rate)
+        criterion = nn.BCEWithLogitsLoss()
+        optimizer = optim.Adam(model.parameters(), lr=cfg.mlp.learning_rate)
+
+        best_train, best_val = train_model_with_early_stopping(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            criterion=criterion,
+            optimizer=optimizer,
+            epochs=cfg.mlp.epochs,
+            patience=cfg.mlp.early_stopping_patience,
+            log_to_mlflow=True
         )
 
-        # 7. Loop de Treinamento
-        for epoch in range(cfg.mlp.epochs):
-
-            # --- FASE DE TREINO ---
-            # model.train() ativa comportamentos específicos do treino:
-            # - Dropout está ATIVO (desliga neurônios aleatoriamente)
-            # - BatchNorm (se houver) usa estatísticas do batch atual
-            model.train()
-            train_loss = 0.0
-
-            for batch_x, batch_y in train_loader:
-                optimizer.zero_grad()           # Zera os gradientes do passo anterior
-                loss = criterion(model(batch_x), batch_y)  # Calcula a perda
-                loss.backward()                 # Backpropagation: calcula gradientes
-                optimizer.step()               # Atualiza os pesos com base nos gradientes
-                train_loss += loss.item()      # Acumula a perda para calcular a média
-
-            # --- FASE DE VALIDAÇÃO ---
-            # model.eval() desativa dropout e usa estatísticas fixas do BatchNorm.
-            # torch.no_grad() desabilita o cálculo de gradientes — não precisamos
-            # deles aqui, o que economiza memória e acelera o cálculo.
-            model.eval()
-            val_loss = 0.0
-            with torch.no_grad():
-                for batch_x, batch_y in val_loader:
-                    val_loss += criterion(model(batch_x), batch_y).item()
-
-            # Calcula as perdas médias por batch para esta época.
-            avg_train_loss = train_loss / len(train_loader)
-            avg_val_loss = val_loss / len(val_loader)
-
-            # --- Log de Métricas por Época no MLflow ---
-            # O parâmetro `step=epoch` é fundamental: ele informa ao MLflow
-            # que esta métrica pertence ao passo (época) N, não a um valor único.
-            # Isso permite que a UI do MLflow gere gráficos de linha mostrando
-            # a evolução do aprendizado ao longo do tempo.
-            mlflow.log_metrics(
-                {
-                    "train_loss": avg_train_loss,
-                    "val_loss": avg_val_loss,
-                },
-                step=epoch,
-            )
-
-            # Loga o progresso a cada 10 épocas (ou na primeira) no terminal.
-            # Se a val_loss estiver AUMENTANDO enquanto a train_loss diminui,
-            # é sinal de overfitting — considere reduzir épocas ou adicionar dropout.
-            if (epoch + 1) % 10 == 0 or epoch == 0:
-                logger.info(
-                    "Época [{}/{}] | Loss Treino: {:.4f} | Loss Val: {:.4f}",
-                    epoch + 1, cfg.mlp.epochs,
-                    avg_train_loss,
-                    avg_val_loss,
-                )
+        mlflow.log_metrics({
+            "final_model_best_train_loss": best_train,
+            "final_model_best_val_loss": best_val,
+        })
 
         # 8. Log do Modelo Final no MLflow
         # Preparamos um exemplo de entrada para que o MLflow possa inferir

@@ -62,8 +62,20 @@ Este documento detalha as decisões de engenharia e a arquitetura do código. El
 Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**:
 
 1.  **Recall (Métrica Alvo):** Nossa prioridade. Queremos identificar o maior número possível de clientes que vão sair. É melhor dar um desconto para quem não ia sair (Falso Positivo) do que perder um cliente por não tê-lo identificado (Falso Negativo).
-2.  **F1-Score:** Usado para garantir que não estamos sendo "extremos demais". Ele equilibra a precisão com o recall.
-3.  **Matriz de Confusão:** Ferramenta visual para o time de negócio entender onde o modelo está errando (ex: "O modelo está sendo conservador demais ou alarmista demais?").
+2.  **AUC-ROC (Métrica Técnica):** Adicionada para medir a capacidade do modelo de distinguir entre as classes (Churn vs. Não Churn) em diferentes limiares. É uma métrica de robustez que complementa o F1-Score.
+3.  **F1-Score:** Usado para garantir que não estamos sendo "extremos demais". Ele equilibra a precisão com o recall.
+4.  **Matriz de Confusão:** Ferramenta visual para o time de negócio entender onde o modelo está errando (ex: "O modelo está sendo conservador demais ou alarmista demais?").
+
+---
+
+## 6. Treinamento Robusto da Rede Neural (PyTorch)
+
+**O que foi feito:** Implementamos Early Stopping, Batching e Validação Cruzada Estratificada no `train_mlp.py`.
+
+**Por que foi feito:**
+- **Generalização:** O **Early Stopping** evita o overfitting, interrompendo o treino quando a perda de validação para de cair, restaurando automaticamente o melhor estado dos pesos.
+- **Estabilidade:** A **Validação Cruzada Estratificada (K-Fold)** garante que a performance do modelo seja consistente em diferentes fatias dos dados, fornecendo uma estimativa de erro mais confiável (`cv_mean_val_loss`).
+- **Eficiência:** O uso de **DataLoaders** com batching otimiza o uso de memória e a convergência do gradiente.
 
 ---
 
@@ -82,6 +94,21 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 - **Tracking:** Parâmetros e métricas são logados automaticamente em `mlruns/`.
 - **Model Registry:** Modelos são registrados com nomes como `ChurnMLP` e `ChurnLogisticRegression`.
 - **Isolamento em Testes:** Criamos fixtures para garantir que os testes automatizados não poluam o histórico de experimentos reais.
+
+---
+
+## 8. Análise de Custo-Benefício e Impacto de Negócio
+
+**O que foi feito:** Criamos uma integração entre as métricas de erro do modelo e o impacto financeiro real.
+
+**Por que foi feito:**
+- **Trade-off de Erros:** Um Falso Negativo (perder um cliente) costuma ser muito mais caro que um Falso Positivo (custo de uma ação de retenção).
+- **Dashboard Interativo:** Permitimos que o time de negócio simule diferentes cenários de Ticket Médio e Custo de Campanha no Streamlit para ver a economia real gerada por cada modelo.
+
+**Como foi feito:**
+- Implementamos o cálculo de **Economia Estimada (Savings)** baseado na Matriz de Confusão.
+- Logamos a métrica `estimated_savings` no MLflow para cada run de avaliação.
+- Adicionamos uma aba de simulação financeira no Dashboard Streamlit.
 
 ---
 

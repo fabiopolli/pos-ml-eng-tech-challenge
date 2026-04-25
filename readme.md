@@ -21,10 +21,10 @@ A organização do projeto segue o padrão *src-layout*, garantindo a separaçã
 │   └── processed/            # Dados limpos e transformados
 ├── docs/                     # Documentação do projeto e ML Canvas
 ├── models/                   # Modelos persistidos (.pkl, .pth)
-├── notebooks/                # EDA, experimentação e Dashboard
-│   ├── EDA.ipynb
-│   ├── eda.py
+├── front/                    # Interface de usuário (Frontend)
 │   └── app_vis.py            # Dashboard interativo (Streamlit)
+├── notebooks/                # EDA e experimentação inicial
+│   └── EDA.ipynb
 ├── src/                      # Código-fonte modularizado
 │   ├── preprocessing/        # Limpeza e engenharia de features
 │   │   └── data_prep.py
@@ -140,8 +140,9 @@ A API estará disponível em `http://localhost:8000`. Acesse `/docs` para a docu
 
 ### Dashboard Interativo (Streamlit)
 ```bash
-streamlit run notebooks/app_vis.py
+uv run streamlit run front/app_vis.py
 ```
+O dashboard agora conta com uma aba exclusiva de **Análise de Custo-Benefício**, permitindo simular o ROI do modelo com base em parâmetros de negócio (Ticket Médio e Custo de Retenção).
 
 ---
 

@@ -53,6 +53,7 @@ from sklearn.metrics import (
     f1_score,
     precision_score,
     recall_score,
+    roc_auc_score,
 )
 
 from src.models.config import PipelineConfig
@@ -116,7 +117,10 @@ def main(
 
     # sklearn: .predict() retorna diretamente 0 ou 1.
     y_pred_dummy = dummy.predict(X_test)
+    y_prob_dummy = dummy.predict_proba(X_test)[:, 1]
+    
     y_pred_lr = lr.predict(X_test)
+    y_prob_lr = lr.predict_proba(X_test)[:, 1]
 
     # PyTorch: converte o DataFrame para Tensor, passa pela rede (obtém logits),
     # aplica sigmoid (converte logit em probabilidade 0-1) e decide pelo limiar 0.5.
@@ -125,9 +129,11 @@ def main(
     with torch.no_grad():  # Sem gradientes — economia de memória na avaliação
         logits = mlp(X_test_t)
         # sigmoid converte o logit (qualquer número real) para [0, 1]
+        probs_mlp = torch.sigmoid(logits)
+        y_prob_mlp = probs_mlp.numpy().flatten()
         # .int() converte True/False para 1/0
         # .numpy().flatten() converte para array 1D do NumPy (formato sklearn)
-        y_pred_mlp = (torch.sigmoid(logits) > 0.5).int().numpy().flatten()
+        y_pred_mlp = (probs_mlp > 0.5).int().numpy().flatten()
 
     # 4. Relatório de Métricas no Terminal
     # classification_report mostra Precisão, Recall, F1 e suporte (N amostras)
@@ -194,9 +200,9 @@ def main(
         # que NENHUM modelo viu durante o treinamento. São os números que
         # definem a qualidade real do modelo em produção.
         # O prefixo (dummy_, lr_, mlp_) identifica qual modelo gerou a métrica.
-        _log_test_metrics(y_test, y_pred_dummy, prefix="dummy")
-        _log_test_metrics(y_test, y_pred_lr, prefix="lr")
-        _log_test_metrics(y_test, y_pred_mlp, prefix="mlp")
+        _log_test_metrics(y_test, y_pred_dummy, y_prob_dummy, prefix="dummy")
+        _log_test_metrics(y_test, y_pred_lr, y_prob_lr, prefix="lr")
+        _log_test_metrics(y_test, y_pred_mlp, y_prob_mlp, prefix="mlp")
 
         # --- Log do Artefato Visual ---
         # mlflow.log_artifact salva o arquivo como artefato da run, tornando-o
@@ -257,7 +263,7 @@ def _load_pytorch_model(local_path: Path, input_dim: int) -> ChurnMLP:
     return mlp
 
 
-def _log_test_metrics(y_true, y_pred, prefix: str) -> None:
+def _log_test_metrics(y_true, y_pred, y_prob, prefix: str) -> None:
     """
     Calcula e loga as principais métricas de classificação no MLflow.
 
@@ -273,13 +279,33 @@ def _log_test_metrics(y_true, y_pred, prefix: str) -> None:
     Args:
         y_true: Rótulos reais (ground truth).
         y_pred: Predições do modelo.
+        y_prob: Probabilidades preditas (para cálculo de AUC-ROC).
         prefix: Prefixo para nomear as métricas (ex: "dummy", "lr", "mlp").
     """
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    
+    # Premissas Financeiras Fixas para o MLflow
+    ticket_medio = 70.0
+    custo_retencao = 30.0
+
+    # Custo sem modelo: Perdemos a receita de todos os clientes que cancelariam (TP + FN)
+    custo_sem_modelo = (tp + fn) * ticket_medio
+
+    # Custo com modelo: 
+    # - Gastamos a retenção com quem o modelo alertou (TP e FP)
+    # - Perdemos a receita de quem o modelo deixou passar (FN)
+    # - Assumimos retenção total dos TPs devido à ação.
+    custo_com_modelo = ((tp + fp) * custo_retencao) + (fn * ticket_medio)
+
+    economia_estimada = custo_sem_modelo - custo_com_modelo
+
     mlflow.log_metrics({
         f"{prefix}_test_accuracy":  accuracy_score(y_true, y_pred),
         f"{prefix}_test_precision": precision_score(y_true, y_pred, average="weighted", zero_division=0),
         f"{prefix}_test_recall":    recall_score(y_true, y_pred, average="weighted", zero_division=0),
         f"{prefix}_test_f1":        f1_score(y_true, y_pred, average="weighted", zero_division=0),
+        f"{prefix}_test_auc_roc":   roc_auc_score(y_true, y_prob),
+        f"{prefix}_test_estimated_savings": economia_estimada,
     })
 
 

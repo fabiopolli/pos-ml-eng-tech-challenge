@@ -76,6 +76,8 @@ class MLPConfig:
     epochs: int = 50
     batch_size: int = 64
     learning_rate: float = 1e-3
+    early_stopping_patience: int = 10
+    cv_folds: int = 5
 
 
 @dataclass
