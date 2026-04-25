@@ -162,19 +162,19 @@ A API foi construída com **FastAPI** e segue padrões RESTful, com validação 
 
 O corpo da requisição (`JSON body`) deve conter os seguintes campos:
 
-| Campo | Tipo | Descrição | Exemplo |
+| Campo | Tipo | Descrição | Intervalo / Opções |
 | :--- | :--- | :--- | :--- |
-| `tenure` | `int` | Meses de permanência do cliente | `12` |
-| `monthly_charges` | `float` | Valor da mensalidade atual | `70.5` |
-| `total_charges` | `float` | Gasto total acumulado | `840.0` |
-| `contract_type` | `str` | Tipo de contrato (`monthly`, `one_year`, `two_year`) | `"one_year"` |
-| `payment_method` | `str` | Método de pagamento | `"credit_card"` |
-| `has_phone_service` | `bool` | Se possui serviço de telefone | `true` |
-| `has_internet_service`| `bool` | Se possui serviço de internet | `true` |
-| `has_online_security` | `bool` | Se possui segurança online | `false` |
-| `has_tech_support` | `bool` | Se possui suporte técnico | `true` |
-| `streaming_tv` | `bool` | Se assina streaming de TV | `false` |
-| `streaming_movies` | `bool` | Se assina streaming de filmes | `true` |
+| `tenure` | `int` | Meses de permanência do cliente | `0` a `72` |
+| `monthly_charges` | `float` | Valor da mensalidade atual | `18.25` a `118.75` |
+| `total_charges` | `float` | Gasto total acumulado | `18.80` a `8684.80` |
+| `contract_type` | `str` | Tipo de contrato do cliente | `monthly`, `one_year`, `two_year` |
+| `payment_method` | `str` | Método de pagamento | `credit_card`, `debit_card`, `electronic_check`, `bank_transfer` |
+| `has_phone_service` | `bool` | Se possui serviço de telefone | `true` ou `false` |
+| `has_internet_service`| `bool` | Se possui serviço de internet | `true` ou `false` |
+| `has_online_security` | `bool` | Se possui segurança online | `true` ou `false` |
+| `has_tech_support` | `bool` | Se possui suporte técnico | `true` ou `false` |
+| `streaming_tv` | `bool` | Se assina streaming de TV | `true` ou `false` |
+| `streaming_movies` | `bool` | Se assina streaming de filmes | `true` ou `false` |
 
 ### 3. Exemplo de Uso (Requisição e Resposta)
 
