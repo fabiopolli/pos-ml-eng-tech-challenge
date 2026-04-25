@@ -13,7 +13,7 @@
 * **Fábio (Infraestrutura):** Criar o repositório institucional no GitHub com a estrutura de diretórios obrigatória: `src/`, `data/`, `models/`, `tests/`, `notebooks/` e `docs/`. CONCLUÍDO
 * **Bill (Ambiente e Reprodutibilidade):** Configurar o `pyproject.toml` como única fonte de verdade para dependências e linting. Estabelecer a fixação de *seeds* globais para assegurar a reprodutibilidade dos experimentos. CONCLUÍDO
 * **Romário (Definição de Negócio):** Selecionar o dataset (mínimo de 5.000 registros e 10 features) e iniciar o preenchimento do **ML Canvas**, focando em stakeholders e proposta de valor. CONCLUÍDO
-* **Denis (Métricas e Governança):** Finalizar o **ML Canvas**, definindo as métricas técnicas (AUC-ROC, F1-Score) e a métrica de negócio (custo de churn evitado). CONCLUÍDO
+* **Denis (Métricas e Governança):** Finalizar o **ML Canvas**, definindo as métricas técnicas (AUC-ROC, F1-Score) e a métrica de negócio (custo de churn evitado). EM ANDAMENTO
 * **📦 Entrega da Fase 0:** Repositório estruturado, ambiente isolado via `pyproject.toml` e ML Canvas concluído. CONCLUÍDO
 
 ---
@@ -24,9 +24,9 @@
 
 * **Romário (Análise Exploratória):** Executar a EDA completa, documentando volume, qualidade, distribuição e prontidão dos dados (*data readiness*). CONCLUÍDO
 * **Denis (Engenharia de Dados):** Desenvolver o pipeline de pré-processamento via Scikit-Learn, garantindo a modularização das funções de limpeza e transformação na pasta `src/`. CONCLUÍDO
-* **Fábio (Modelagem Baseline):** Treinar modelos baseline (`DummyClassifier` e `LogisticRegression`) utilizando **validação cruzada estratificada**. Registrar os experimentos no MLflow. EM ANDAMENTO
+* **Fábio (Modelagem Baseline):** Treinar modelos baseline (`DummyClassifier` e `LogisticRegression`) utilizando **validação cruzada estratificada**. Registrar os experimentos no MLflow. CONCLUÍDO
 * **Bill (Deep Learning):** Construir e treinar a **Rede Neural (MLP)** com PyTorch, implementando loop de treinamento com *batching* e técnica de *early stopping*. CONCLUÍDO
-* **Bill (Documentação):** Atualizar. ECONCLUÍDO
+* **Bill (Documentação):** Atualizar. CONCLUÍDO
 * **Bill (Otimização do modelo):** Atualizar. EM ANDAMENTO
 * **📦 Entrega da Fase 1:** Notebook de EDA, scripts de treinamento e tabela comparativa de modelos registrada no MLflow.
 
@@ -36,8 +36,8 @@
 **Dinâmica:** Refatoração do código para padrões produtivos e criação da interface de inferência.
 **Ferramentas:** FastAPI, Pydantic, Ruff, Pytest, Pandera.
 
-* **Denis (Desenvolvimento de API):** Construir a API utilizando **FastAPI**, implementando as rotas `/predict` e `/health`, além do *middleware* para monitoramento de latência.
-* **Bill (Qualidade de Código):** Implementar **logging estruturado** (em substituição ao comando `print()`) e garantir conformidade com o linter **Ruff** (erro zero).
+* **Denis (Desenvolvimento de API):** Construir a API utilizando **FastAPI**, implementando as rotas `/predict` e `/health`, além do *middleware* para monitoramento de latência. CONCLUÍDO
+* **Bill (Qualidade de Código):** Implementar **logging estruturado** (em substituição ao comando `print()`) e garantir conformidade com o linter **Ruff** (erro zero). CONCLUÍDO
 * **Romário (Validação e Automação):** Definir os modelos de dados via **Pydantic** para a API e estruturar o arquivo `Makefile` para automação de tarefas.
 * **Fábio (Garantia de Qualidade - QA):** Desenvolver a suíte de testes automatizados com **Pytest**, incluindo *smoke tests*, validação de schema (Pandera) e testes de API.
 * **📦 Entrega da Fase 2:** API de inferência funcional, código refatorado em módulos e suíte de testes validada.
