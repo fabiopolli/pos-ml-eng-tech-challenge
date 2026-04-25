@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from app.core.config import get_settings
 from app.routes import health, predict
@@ -78,6 +79,12 @@ app.add_exception_handler(ValidationException, validation_exception_handler)
 app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
 app.add_exception_handler(ValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
+
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redireciona a raiz para a documentação."""
+    return RedirectResponse(url="/docs")
+
 
 # Rotas
 app.include_router(health.router, prefix=settings.api_prefix)

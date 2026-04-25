@@ -6,7 +6,7 @@ O uso do Pandera garante o princípio "Fail Fast", impedindo que dados
 corrompidos cheguem às etapas de feature engineering e treinamento.
 """
 
-import pandera as pa
+import pandera.pandas as pa
 from pandera.typing import Series
 
 

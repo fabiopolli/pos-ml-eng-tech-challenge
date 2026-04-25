@@ -37,6 +37,7 @@ Execução:
     python src/models/train_mlp.py
 """
 
+import os
 import numpy as np
 import mlflow
 import mlflow.pytorch
@@ -274,9 +275,10 @@ def main(
     # =========================================================================
     # 3. Configuração do MLflow e Loop de Treinamento
     # =========================================================================
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
-
-    with mlflow.start_run(run_name="mlp_run"):
+    if not os.environ.get("MLFLOW_RUN_ID"):
+        mlflow.set_experiment(cfg.mlflow.experiment_name)
+ 
+    with mlflow.start_run(run_name="mlp_run", nested=True):
 
         # --- Log de Parâmetros ---
         mlflow.log_params({

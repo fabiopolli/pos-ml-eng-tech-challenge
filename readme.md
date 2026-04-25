@@ -142,9 +142,74 @@ O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode comparar m
 uv sync --all-extras
 
 # Rodar o servidor da API
-uv run uvicorn ml-churn-api.app.main:app --reload
+uv run uvicorn app.main:app --app-dir ml-churn-api --reload
 ```
-A API estará disponível em `http://localhost:8000`. Acesse `/docs` para a documentação interativa (Swagger).
+A API estará disponível em `http://localhost:8000`. 
+- **Documentação Interativa (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Documentação Alternativa (Redoc):** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+---
+
+## 🔗 Detalhamento da API (Endpoints e Contratos)
+
+A API foi construída com **FastAPI** e segue padrões RESTful, com validação rigorosa de tipos via **Pydantic**.
+
+### 1. Principais Endpoints
+- `GET /api/v1/health`: Verifica se o serviço está online.
+- `POST /api/v1/predict`: Recebe dados do cliente e retorna a probabilidade de churn.
+
+### 2. Dicionário de Dados (Entrada - `/predict`)
+
+O corpo da requisição (`JSON body`) deve conter os seguintes campos:
+
+| Campo | Tipo | Descrição | Exemplo |
+| :--- | :--- | :--- | :--- |
+| `tenure` | `int` | Meses de permanência do cliente | `12` |
+| `monthly_charges` | `float` | Valor da mensalidade atual | `70.5` |
+| `total_charges` | `float` | Gasto total acumulado | `840.0` |
+| `contract_type` | `str` | Tipo de contrato (`monthly`, `one_year`, `two_year`) | `"one_year"` |
+| `payment_method` | `str` | Método de pagamento | `"credit_card"` |
+| `has_phone_service` | `bool` | Se possui serviço de telefone | `true` |
+| `has_internet_service`| `bool` | Se possui serviço de internet | `true` |
+| `has_online_security` | `bool` | Se possui segurança online | `false` |
+| `has_tech_support` | `bool` | Se possui suporte técnico | `true` |
+| `streaming_tv` | `bool` | Se assina streaming de TV | `false` |
+| `streaming_movies` | `bool` | Se assina streaming de filmes | `true` |
+
+### 3. Exemplo de Uso (Requisição e Resposta)
+
+**Requisição (cURL):**
+```bash
+curl -X 'POST' 'http://localhost:8000/api/v1/predict' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "tenure": 24,
+    "monthly_charges": 85.0,
+    "total_charges": 2040.0,
+    "contract_type": "one_year",
+    "payment_method": "credit_card",
+    "has_online_security": true
+  }'
+```
+
+**Resposta (Sucesso - 200 OK):**
+```json
+{
+  "prediction": 1,
+  "probability": 0.7452,
+  "model_version": "1.0.0",
+  "request_id": "a1b2c3d4"
+}
+```
+
+### 4. Usando o Swagger UI (Interativo)
+Ao acessar `/docs`, você verá a interface do Swagger. Para testar:
+1. Clique no botão **"Try it out"** no endpoint `/predict`.
+2. Edite o JSON de exemplo com os valores desejados.
+3. Clique em **"Execute"**.
+4. Veja o resultado (Response Body) e o código de status logo abaixo.
+
+---
 
 ### Dashboard Interativo (Streamlit)
 ```bash

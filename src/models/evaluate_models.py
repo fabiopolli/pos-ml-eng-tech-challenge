@@ -37,6 +37,7 @@ Execução (após rodar main.py):
     python src/models/evaluate_models.py
 """
 
+import os
 import joblib
 import matplotlib.pyplot as plt
 import mlflow
@@ -191,10 +192,11 @@ def main(
     # =========================================================================
     # Configuramos o experimento MLflow para que a run de avaliação fique
     # agrupada com as runs de treinamento na UI do MLflow.
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
-
-    with mlflow.start_run(run_name="evaluation_run"):
+    if not os.environ.get("MLFLOW_RUN_ID"):
+        mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
+        mlflow.set_experiment(cfg.mlflow.experiment_name)
+ 
+    with mlflow.start_run(run_name="evaluation_run", nested=True):
         # --- Log de Métricas Finais de Teste ---
         # Estas são as métricas "honestas" — calculadas no conjunto de teste,
         # que NENHUM modelo viu durante o treinamento. São os números que

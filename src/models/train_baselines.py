@@ -38,6 +38,7 @@ Execução:
     python src/models/train_baselines.py
 """
 
+import os
 import joblib
 import mlflow
 import mlflow.sklearn
@@ -109,15 +110,13 @@ def main(
     # =========================================================================
     # 3. Configuração do MLflow
     # =========================================================================
-    # mlflow.set_experiment garante que a run será criada dentro do experimento
-    # correto. Se o experimento ainda não existir, o MLflow o cria automaticamente.
-    # O tracking URI já foi configurado pelo main.py (ou pelo conftest.py nos testes).
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
-
+    if not os.environ.get("MLFLOW_RUN_ID"):
+        mlflow.set_experiment(cfg.mlflow.experiment_name)
+ 
     # mlflow.start_run() abre um contexto de rastreamento. Tudo que for logado
     # (params, metrics, modelos) dentro deste bloco pertence a esta "run".
     # run_name é um rótulo amigável visível na UI do MLflow.
-    with mlflow.start_run(run_name="baseline_run"):
+    with mlflow.start_run(run_name="baseline_run", nested=True):
 
         # --- Log de Parâmetros ---
         # mlflow.log_params registra os hiperparâmetros como pares chave-valor.

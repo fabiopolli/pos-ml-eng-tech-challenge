@@ -33,6 +33,7 @@ Próximo passo após o pipeline:
     python src/models/evaluate_models.py
 """
 
+import os
 import time
 import mlflow
 
@@ -92,7 +93,8 @@ def main() -> None:
     # experimento e usem o mesmo tracking URI.
     cfg = PipelineConfig()
     mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    if not os.environ.get("MLFLOW_RUN_ID"):
+        mlflow.set_experiment(cfg.mlflow.experiment_name)
 
     start_total = time.time()
 
