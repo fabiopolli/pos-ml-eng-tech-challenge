@@ -1,0 +1,13 @@
+name: churn-prediction-tech-challenge
+
+entry_points:
+  main:
+    command: "python main.py"
+  data_prep:
+    command: "python src/preprocessing/data_prep.py"
+  train_baselines:
+    command: "python src/models/train_baselines.py"
+  train_mlp:
+    command: "python src/models/train_mlp.py"
+  evaluate:
+    command: "python src/models/evaluate_models.py"

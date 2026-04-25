@@ -4,7 +4,7 @@ Este repositório contém o desenvolvimento de um pipeline profissional de Machi
 
 ## 👥 Integrantes do Grupo
 * **Fábio Polli** - Infraestrutura & Modelagem Baseline
-* **Bill** - Ambiente & Deep Learning (PyTorch)
+* **Bill Kopp** - Ambiente & Deep Learning (PyTorch)
 * **Romário** - Definição de Negócio & EDA
 * **Denis** - Engenharia de Dados (Pipeline Scikit-Learn)
 
@@ -94,17 +94,25 @@ pip install -e ".[dev]"
 
 ## 🚀 Executando o Pipeline
 
-### Pipeline Completo (Quick Start)
+Execute o orquestrador principal para treinar todos os modelos em sequência. Você pode fazer isso de duas formas:
 
-Execute o orquestrador principal para treinar todos os modelos em sequência:
-
+#### Opção A: Via Python (Direto)
 ```bash
 python main.py
 ```
 
+#### Opção B: Via MLflow Projects (Recomendado)
+O projeto está configurado com um arquivo `MLproject`, permitindo a execução padronizada:
+```bash
+mlflow run . --env-manager=local
+```
+
 Isso executa, nessa ordem:
-1. **Etapa 1** → `train_baselines.py`: treina `DummyClassifier` e `LogisticRegression`, salvando em `models/`
-2. **Etapa 2** → `train_mlp.py`: treina a Rede Neural `MLP` (PyTorch), salvando em `models/`
+1. **Validação de Dados** → Verifica o esquema do CSV com Pandera.
+2. **Etapa 1** → `train_baselines.py`: treina `DummyClassifier` e `LogisticRegression`.
+3. **Etapa 2** → `train_mlp.py`: treina a Rede Neural `MLP` (PyTorch).
+
+> 💡 **Nota:** Todos os artefatos (modelos e scalers) são salvos na pasta `models/` e registrados automaticamente no **MLflow Tracking**.
 
 ### Execução Modular (passo a passo)
 
