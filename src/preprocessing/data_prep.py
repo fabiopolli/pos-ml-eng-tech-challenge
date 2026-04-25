@@ -30,6 +30,7 @@ from loguru import logger
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from src.preprocessing.schemas import RawDataSchema
 
 
 def load_and_clean_data(file_path: Path | str) -> pd.DataFrame:
@@ -56,6 +57,11 @@ def load_and_clean_data(file_path: Path | str) -> pd.DataFrame:
     """
     logger.info("Carregando dados de: {}", file_path)
     df = pd.read_csv(file_path)
+
+    # Validação rigorosa com Pandera (Fail Fast)
+    logger.info("Validando esquema dos dados brutos com Pandera...")
+    df = RawDataSchema.validate(df)
+    logger.success("Dados brutos validados com sucesso!")
 
     # Remove o ID do cliente — é um identificador único que não tem valor
     # preditivo (o modelo não deve aprender com o número do cliente).

@@ -111,7 +111,7 @@ Isso executa, nessa ordem:
 Caso queira executar etapas individualmente:
 
 ```bash
-# (Opcional) Processa e exporta CSVs para data/processed/
+# Valida os dados brutos com Pandera e exporta CSVs para data/processed/
 python src/preprocessing/data_prep.py
 
 # Treina DummyClassifier e LogisticRegression
@@ -179,6 +179,7 @@ As dependências estão organizadas em `pyproject.toml`:
 - `torch` — Deep Learning (MLP)
 - `joblib` — Serialização de modelos
 - `mlflow` — Rastreamento de experimentos
+- `pandera` — Validação de schemas de dados
 - `streamlit` — Dashboard interativo
 - `fastapi`, `pydantic`, `uvicorn` — API REST
 - `matplotlib`, `seaborn` — Visualização

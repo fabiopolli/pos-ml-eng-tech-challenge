@@ -31,7 +31,7 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 - [x] Refatorar código dos notebooks para módulos na pasta `src/`.
 - [x] Criar Pipeline de pré-processamento robusto (Sklearn Pipeline).
 - [x] Escrever Testes Automatizados com Pytest (unitários e smoke tests).
-- [ ] Implementar validação de dados de entrada com Pandera.
+- [x] Implementar validação de dados de entrada com Pandera.
 - [x] Desenvolver API FastAPI com endpoints `/predict` e `/health`.
 - [x] Implementar validação de schemas de entrada/saída com Pydantic.
 - [x] Adicionar Middleware de monitoramento de latência na API.

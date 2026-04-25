@@ -112,7 +112,21 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 
 ---
 
-## 9. Disponibilização via API (FastAPI)
+## 9. Validação de Dados com Pandera
+
+**O que foi feito:** Implementamos uma camada de validação de esquema (Data Schema) usando Pandera no início do pipeline de pré-processamento.
+
+**Por que foi feito:**
+- **Fail Fast:** Detectar inconsistências nos dados brutos (tipos errados, colunas ausentes, valores fora do esperado) antes de iniciar o treinamento ou a engenharia de features.
+- **Integridade:** Garantir que o contrato entre a fonte de dados e o modelo seja respeitado.
+
+**Como foi feito:**
+- Criamos o arquivo `src/preprocessing/schemas.py` com a definição do `RawDataSchema`.
+- Integramos a validação na função `load_and_clean_data` do `data_prep.py`.
+
+---
+
+## 10. Disponibilização via API (FastAPI)
 
 **O que foi feito:** Criamos uma API REST robusta para servir as predições de churn em tempo real.
 
@@ -127,11 +141,12 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 
 ---
 
-## 10. Ferramentas Utilizadas
+## 11. Ferramentas Utilizadas
 
 - **UV:** Gerenciador de pacotes ultra-rápido para garantir que todos no time usem as mesmas versões de biblioteca.
 - **FastAPI:** Framework moderno e de alta performance para construção de APIs.
 - **MLflow:** Gestão de experimentos, métricas e registro de modelos.
+- **Pandera:** Validação estatística e de esquema para DataFrames.
 - **Loguru:** Substituímos o `print` por logs estruturados, facilitando o debug em ambientes de produção.
 - **Pathlib:** Garante que o código funcione tanto em Windows quanto Linux/Mac, tratando caminhos de arquivos de forma inteligente.
 
