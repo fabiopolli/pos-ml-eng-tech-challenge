@@ -221,25 +221,25 @@ O dashboard agora conta com uma aba exclusiva de **Análise de Custo-Benefício*
 
 ## 🧪 Execução de Testes (QA & Validação)
 
-A suíte de testes automatizados foi desenvolvida focando na garantia de qualidade (QA) contínua do pipeline de dados e da API, utilizando **Pytest**. A robustez do sistema é garantida por:
+A suíte de testes automatizados valida o pipeline de dados (Pandera), os smoke tests de Machine Learning e os contratos da API (Pydantic).
 
-* **Smoke Tests:** Validação ponta a ponta do treinamento dos modelos (Baselines e MLP PyTorch), garantindo que os artefatos (.pkl e .pth) sejam gerados corretamente.
-* **Validação de Contratos de Dados (Fail Fast):** Implementação de schemas com **Pandera** (`RawDataSchema`) para garantir a integridade dos dados brutos antes do processamento.
-* **Testes de API e Integração:** Validação rigorosa de endpoints, tratamento de erros e contratos de entrada/saída utilizando **Pydantic**.
-* **Compatibilidade Multiplataforma:** Fixtures configuradas para lidar com URIs de tracking do MLflow tanto em ambiente Windows (PowerShell) quanto Unix.
-
-Para rodar a suíte completa localmente e gerar evidências:
-
+**Execução Rápida (Local):**
 ```bash
-# Executa todos os 44 testes (Pipeline ML + API) com detalhamento
 pytest tests/ ml-churn-api/tests/ -v
-
-# Para salvar o log de execução como evidência de QA
-pytest tests/ ml-churn-api/tests/ -v > test_execution.log
-
-# Rodar com análise de cobertura de código (Coverage)
-pytest tests/ ml-churn-api/tests/ --cov=src --cov=ml-churn-api/app
 ```
+
+Gerar Relatórios Visuais (HTML & Coverage):
+```bash
+### Para utilizadores Windows (PowerShell):
+New-Item -ItemType Directory -Force -Path tests\docs; pytest tests/ ml-churn-api/tests/ -v --html=tests/docs/relatorio_qa.html --self-contained-html --cov=src --cov=ml-churn-api/app --cov-report=html:tests/docs/htmlcov
+
+# Para utilizadores Linux/macOS:
+make qa-report
+```
+Os relatórios interativos serão guardados na pasta tests/docs/.
+
+Integração Contínua (CI/CD):
+O projeto possui uma esteira configurada no GitHub Actions. A cada push ou pull request na branch main, todos os testes são executados automaticamente na nuvem, utilizando Mocks dinâmicos para a API, garantindo a integridade do código sem necessidade de ficheiros pesados.
 
 ---
 
@@ -290,7 +290,7 @@ As dependências estão organizadas em `pyproject.toml`:
 
 3. **Testar localmente:**
    ```bash
-   pytest tests/
+pytest tests/ ml-churn-api/tests/ -v
    ```
 
 4. **Rodar o pipeline completo:**
