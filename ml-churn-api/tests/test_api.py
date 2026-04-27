@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 import json
+import os
 
 from app.main import app
 from app.schemas.predict import PredictInput
@@ -47,6 +48,19 @@ def mock_model_response():
         "model_version": "1.0.0",
         "request_id": "abc12345",
     }
+
+@pytest.fixture(autouse=True)
+def auto_mock_in_ci():
+    """
+    Identifica se o teste está rodando na nuvem (GitHub Actions).
+    Se sim, desabilita a busca pelo modelo físico (.pkl) e usa o Mock.
+    Isso mantém os testes reais na sua máquina, mas evita que a pipeline quebre.
+    """
+    if os.environ.get("CI") == "true":
+        with patch("app.services.model_service.USE_REAL_MODEL", False):
+            yield
+    else:
+        yield
 
 
 # ============================================================
