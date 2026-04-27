@@ -70,3 +70,11 @@ desktop.ini
 # DIRETÓRIO DE TESTES LOCAIS (legado)
 # ==========================================
 testes_bill/
+
+# ==========================================
+# Relatórios de Teste e QA
+# ==========================================
+tests/docs/
+test_execution.log
+.pytest_cache/
+htmlcov/

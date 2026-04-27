@@ -219,14 +219,26 @@ O dashboard agora conta com uma aba exclusiva de **Análise de Custo-Benefício*
 
 ---
 
-## 🧪 Execução de Testes
+## 🧪 Execução de Testes (QA & Validação)
+
+A suíte de testes automatizados foi desenvolvida focando na garantia de qualidade (QA) contínua do pipeline de dados e da API, utilizando **Pytest**. A robustez do sistema é garantida por:
+
+* **Smoke Tests:** Validação ponta a ponta do treinamento dos modelos (Baselines e MLP PyTorch), garantindo que os artefatos (.pkl e .pth) sejam gerados corretamente.
+* **Validação de Contratos de Dados (Fail Fast):** Implementação de schemas com **Pandera** (`RawDataSchema`) para garantir a integridade dos dados brutos antes do processamento.
+* **Testes de API e Integração:** Validação rigorosa de endpoints, tratamento de erros e contratos de entrada/saída utilizando **Pydantic**.
+* **Compatibilidade Multiplataforma:** Fixtures configuradas para lidar com URIs de tracking do MLflow tanto em ambiente Windows (PowerShell) quanto Unix.
+
+Para rodar a suíte completa localmente e gerar evidências:
 
 ```bash
-# Rodar todos os testes
-pytest tests/
+# Executa todos os 44 testes (Pipeline ML + API) com detalhamento
+pytest tests/ ml-churn-api/tests/ -v
 
-# Rodar com cobertura de código
-pytest tests/ --cov=src
+# Para salvar o log de execução como evidência de QA
+pytest tests/ ml-churn-api/tests/ -v > test_execution.log
+
+# Rodar com análise de cobertura de código (Coverage)
+pytest tests/ ml-churn-api/tests/ --cov=src --cov=ml-churn-api/app
 ```
 
 ---

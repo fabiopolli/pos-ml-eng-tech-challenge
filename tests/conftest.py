@@ -1,3 +1,4 @@
+import os
 import mlflow
 import numpy as np
 import pandas as pd
@@ -28,8 +29,19 @@ def mlflow_test_tracking(tmp_path: Path):
     3. Restaura as configurações originais após cada teste (via yield).
     """
     test_mlruns = tmp_path / "mlruns"
-    mlflow.set_tracking_uri(str(test_mlruns))
+    
+    # Identifica o sistema operacional para evitar o KeyError de URI no MLflow
+    if os.name == "nt":
+        # No Windows, força o formato URI (file:///C:/...)
+        tracking_uri = test_mlruns.resolve().as_uri()
+    else:
+        # No Linux/Mac, o caminho em string padrão funciona perfeitamente
+        tracking_uri = str(test_mlruns)
+
+    mlflow.set_tracking_uri(tracking_uri)
+    
     yield
+    
     # Restaura o tracking URI padrão após o teste
     mlflow.set_tracking_uri("mlruns")
 

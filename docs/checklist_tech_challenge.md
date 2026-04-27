@@ -30,10 +30,10 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 ## ⚙️ 4. Etapa 3: Engenharia e API (FastAPI)
 - [x] Refatorar código dos notebooks para módulos na pasta `src/`.
 - [x] Criar Pipeline de pré-processamento robusto (Sklearn Pipeline).
-- [PARCIAL] Escrever Testes Automatizados com Pytest (unitários e smoke tests).
-- [PARCIAL] Implementar validação de dados de entrada com Pandera.
+- [x] Escrever Testes Automatizados com Pytest (unitários e smoke tests).
+- [x] Implementar validação de dados de entrada com Pandera.
 - [x] Desenvolver API FastAPI com endpoints `/predict` e `/health`.
-- [PARCIAL] Implementar validação de schemas de entrada/saída com Pydantic.
+- [x] Implementar validação de schemas de entrada/saída com Pydantic.
 - [x] Adicionar Middleware de monitoramento de latência na API.
 
 ## 📝 5. Etapa 4: Documentação e Entrega
