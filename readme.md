@@ -132,9 +132,35 @@ python src/models/train_mlp.py
 python src/models/evaluate_models.py
 ```
 
-### Visualizar Resultados no MLflow
+### 📊 Gerenciamento de Experimentos (MLflow)
+
+O projeto utiliza o **MLflow** para gerenciar todo o ciclo de vida do modelo. Ao executar o pipeline (via `main.py` ou `mlflow run`), o MLflow registra automaticamente:
+
+*   **Parâmetros:** Hiperparâmetros, sementes de aleatoriedade e configurações.
+*   **Métricas:** Acurácia, perda (loss) por época e métricas de validação cruzada.
+*   **Modelos:** Registro automático no **Model Registry** para versionamento.
+*   **Nested Runs:** O pipeline principal cria uma "Run Pai" que engloba as sub-etapas (Baselines, MLP e Avaliação) para melhor organização.
+
+#### Como visualizar os resultados:
+1. Inicie a interface visual:
+   ```bash
+   make mlflow-ui   # ou: mlflow ui
+   ```
+2. Acesse no navegador: **[http://localhost:5000](http://localhost:5000)**
+
+#### O que observar no Dashboard:
+*   **Curvas de Aprendizado:** Na run `mlp_run`, analise o gráfico de `train_loss` vs `val_loss` para detectar overfitting.
+*   **Comparação:** Selecione múltiplas runs e use o botão **Compare** para ver o impacto de diferentes hiperparâmetros.
+*   **Model Registry:** Acesse a aba **Models** para gerenciar versões dos modelos `ChurnMLP` e `ChurnLogisticRegression`.
+
+#### Avaliação Final:
+Para consolidar as métricas de teste e gerar o gráfico comparativo final no MLflow:
 ```bash
-O MLflow Dashboard abrirá em `http://localhost:5000` onde você pode comparar métricas entre runs, analisar parâmetros e gerenciar o **Model Registry** (versionamento de modelos para produção).
+make eval  # ou: python src/models/evaluate_models.py
+```
+Isso criará uma `evaluation_run` com o relatório `evaluation_summary.png` salvo como um artefato.
+
+> 📚 **Dica:** Para um guia passo a passo detalhado, consulte o [Tutorial MLflow](docs/tutorial_mlflow.md).
 
 ### API de Predição (FastAPI)
 ```bash
@@ -221,25 +247,35 @@ O dashboard agora conta com uma aba exclusiva de **Análise de Custo-Benefício*
 
 ## 🧪 Execução de Testes (QA & Validação)
 
-A suíte de testes automatizados valida o pipeline de dados (Pandera), os smoke tests de Machine Learning e os contratos da API (Pydantic).
+A suíte de testes automatizados foi desenvolvida focando na garantia de qualidade (QA) contínua do pipeline de dados e da API, utilizando **Pytest**. A robustez do sistema é garantida por:
+
+*   **Smoke Tests:** Validação ponta a ponta do treinamento dos modelos (Baselines e MLP PyTorch), garantindo que os artefatos sejam gerados corretamente.
+*   **Validação de Dados (Fail Fast):** Schemas do **Pandera** garantem a integridade dos dados brutos antes do processamento.
+*   **Contratos de API:** Validação rigorosa de endpoints e payloads utilizando **Pydantic**.
+*   **Compatibilidade:** Fixtures que garantem a execução dos testes tanto em Windows quanto em sistemas Unix (Linux/macOS).
 
 **Execução Rápida (Local):**
 ```bash
 pytest tests/ ml-churn-api/tests/ -v
 ```
 
-Gerar Relatórios Visuais (HTML & Coverage):
+**Gerar Relatórios Visuais (HTML & Coverage):**
 ```bash
-### Para utilizadores Windows (PowerShell):
-New-Item -ItemType Directory -Force -Path tests\docs; pytest tests/ ml-churn-api/tests/ -v --html=tests/docs/relatorio_qa.html --self-contained-html --cov=src --cov=ml-churn-api/app --cov-report=html:tests/docs/htmlcov
-
 # Para utilizadores Linux/macOS:
 make qa-report
-```
-Os relatórios interativos serão guardados na pasta tests/docs/.
 
-Integração Contínua (CI/CD):
-O projeto possui uma esteira configurada no GitHub Actions. A cada push ou pull request na branch main, todos os testes são executados automaticamente na nuvem, utilizando Mocks dinâmicos para a API, garantindo a integridade do código sem necessidade de ficheiros pesados.
+# Para utilizadores Windows (PowerShell):
+New-Item -ItemType Directory -Force -Path tests\docs; pytest tests/ ml-churn-api/tests/ -v --html=tests/docs/relatorio_qa.html --self-contained-html --cov=src --cov=ml-churn-api/app --cov-report=html:tests/docs/htmlcov
+```
+Os relatórios interativos serão guardados na pasta `tests/docs/`.
+
+### 🤖 Integração Contínua (CI/CD - GitHub Actions)
+O projeto possui uma esteira configurada no **GitHub Actions** (`.github/workflows/ci_pipeline.yml`). 
+A cada `push` ou `pull request` na branch `main`:
+1. Um ambiente isolado é criado na nuvem.
+2. As dependências são instaladas via `uv`.
+3. Todos os testes são executados automaticamente utilizando **Mocks dinâmicos** para simular os modelos da API, garantindo a validação da lógica sem trafegar arquivos pesados.
+4. O *pipeline* bloqueia merges caso a cobertura de testes ou algum schema falhe.
 
 ---
 

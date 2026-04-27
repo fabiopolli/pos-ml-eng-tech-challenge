@@ -92,7 +92,8 @@ def main() -> None:
     # Isso garante que todos os runs do pipeline pertençam ao mesmo
     # experimento e usem o mesmo tracking URI.
     cfg = PipelineConfig()
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", cfg.mlflow.tracking_uri)
+    mlflow.set_tracking_uri(tracking_uri)
     if not os.environ.get("MLFLOW_RUN_ID"):
         mlflow.set_experiment(cfg.mlflow.experiment_name)
 

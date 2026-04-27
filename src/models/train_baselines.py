@@ -110,6 +110,8 @@ def main(
     # =========================================================================
     # 3. Configuração do MLflow
     # =========================================================================
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", cfg.mlflow.tracking_uri)
+    mlflow.set_tracking_uri(tracking_uri)
     if not os.environ.get("MLFLOW_RUN_ID"):
         mlflow.set_experiment(cfg.mlflow.experiment_name)
  

@@ -48,8 +48,10 @@
 **Dinâmica:** Consolidação da documentação técnica e defesa do projeto via vídeo explicativo.
 **Ferramentas:** Model Card, Método STAR (Vídeo), Markdown.
 
-* **Integrante 1 (Model Card):** Elaborar o **Model Card** completo, detalhando performance, limitações técnicas, vieses e cenários de falha.
-* **Integrante 2 (Monitoramento):** Documentar a arquitetura de deploy escolhida (justificando batch vs real-time) e redigir o **plano de monitoramento** (métricas de drift e alertas).
-* **Integrante 3 (Documentação Final):** Consolidar o `README.md` com instruções de setup, execução e descrição da arquitetura. (Opcional: Deploy em nuvem).
-* **Integrante 4 (Apresentação STAR):** Produzir o vídeo de 5 minutos utilizando o **método STAR** (Situation, Task, Action, Result), demonstrando os resultados e lições aprendidas.
+* **Denis (Model Card):** Elaborar o **Model Card** completo, detalhando performance, limitações técnicas, vieses e cenários de falha.
+* **Bill (Monitoramento):** Documentar a arquitetura de deploy escolhida (justificando batch vs real-time) e redigir o **plano de monitoramento** (métricas de drift e alertas).
+* **Romário (Documentação Final):** Consolidar o `README.md` com instruções de setup, execução e descrição da arquitetura. (Opcional: Deploy em nuvem).
+* **Fábio (Apresentação STAR):** Produzir o vídeo de 5 minutos utilizando o **método STAR** (Situation, Task, Action, Result), demonstrando os resultados e lições aprendidas.
 * **📦 Entrega da Fase 3:** Repositório finalizado, documentação técnica completa e link para o vídeo de apresentação.
+
+
