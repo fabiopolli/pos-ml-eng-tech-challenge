@@ -43,15 +43,24 @@ Este documento detalha as decisões de engenharia e a arquitetura do código. El
 
 ---
 
-## 4. Estratégia de Testes Automatizados
+## 4. Estratégia de Testes Automatizados e CI/CD
 
-**O que foi feito:** Implementamos uma suíte de testes com `pytest` cobrindo desde unidades de código até o pipeline completo (*Smoke Tests*).
+**O que foi feito:** Implementamos uma suíte de testes robusta com `pytest` e integramos a execução contínua (CI) através do GitHub Actions.
 
 **Por que foi feito:**
-- Garantir que uma alteração no pré-processamento não quebre o treinamento da rede neural.
-- Validar se as transformações matemáticas estão mantendo a integridade dos dados.
+- **Prevenção de Regressões:** Garantir que alterações no pré-processamento, por exemplo, não quebrem o treinamento da rede neural.
+- **Validação:** Validar se as transformações matemáticas estão mantendo a integridade dos dados.
+- **Automação de QA:** O GitHub Actions garante que nenhuma alteração vá para a `main` sem que todos os testes passem.
 
-**Como executar:**
+**Implementações e Ferramentas:**
+1. **Pytest & Relatórios HTML:** A suíte de testes agora conta com a geração automática de relatórios de QA em formato HTML (`relatorio_qa.html`) utilizando o `pytest-html`. Isso melhora substancialmente a visualização do histórico de testes.
+2. **Pipeline CI (GitHub Actions):** Criamos um workflow de Integração Contínua (`ci_pipeline.yml`) disparado em `push` e `pull_request` na branch `main`.
+3. **Mecânica do Pipeline:**
+   - Instala o Python 3.10 e o gerenciador ultrarrápido `uv`.
+   - Roda a bateria de testes combinados (pipeline ML + API do FastAPI).
+   - Salva o arquivo `relatorio_qa.html` como um **Artefato** do repositório no GitHub para facilitar o download e auditoria após cada execução (mesmo em caso de falha nos testes).
+
+**Como executar localmente:**
 - `make test`: Roda os testes de lógica rápidos.
 - `make test-full`: Roda os testes de integração (treina os modelos com dados sintéticos).
 
@@ -151,5 +160,7 @@ Para este projeto, a escolha das métricas é guiada pelo **impacto financeiro**
 - **Pathlib:** Garante que o código funcione tanto em Windows quanto Linux/Mac, tratando caminhos de arquivos de forma inteligente.
 
 ---
-**Data de Atualização:** 25 de Abril de 2026
+**Data de Atualização:** 30 de Abril de 2026
 **Responsável:** Agent <Data> (Auxiliando Bill)
+
+> **Nota:** As políticas operacionais de resposta a incidentes (como degradação de performance da rede neural ou falhas na API) estão detalhadas no nosso [Plano de Monitoramento](plano_monitoramento.md).

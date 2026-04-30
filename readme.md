@@ -345,12 +345,21 @@ pytest tests/ ml-churn-api/tests/ -v
 
 ---
 
+## 📡 Observabilidade e Monitoramento
+
+Para garantir a saúde do modelo em produção e evitar degradação silenciosa, o projeto conta com um **Plano de Monitoramento** detalhado, alinhado à nossa implementação (middlewares da API, validações Pydantic/Pandera e MLflow Registry). O documento especifica as métricas acompanhadas, alertas e os *playbooks* passo a passo para resolução de incidentes.
+
+👉 **Consulte:** [Plano de Monitoramento](docs/plano_monitoramento.md)
+
+---
+
 ## 📚 Recursos Adicionais
 
 - **ML Canvas:** Documentação de negócio em `docs/`
 - **Relatório de Implementação:** Detalhes técnicos em `docs/relatorio_de_implementacao.md`
 - **Guia da API FastAPI:** Manual de uso da API em `docs/guia_api_fastapi.md`
 - **Tutorial MLflow:** Guia rápido para o time em `docs/tutorial_mlflow.md`
+- **Plano de Monitoramento:** Playbook e métricas do modelo em `docs/plano_monitoramento.md`
 - **FIAP Tech Challenge:** [Link do desafio]
 - **MLflow Docs:** https://mlflow.org/docs/latest/index.html
 - **Scikit-learn:** https://scikit-learn.org/

@@ -100,6 +100,6 @@ curl -X 'POST' \
 
 ## 5. Próximos Passos Sugeridos
 
-1.  **Monitoramento de Drift:** Implementar o `evidently` (já presente nas dependências) para monitorar se os dados que chegam na API estão mudando muito em relação aos dados de treino.
+1.  **Observabilidade:** Acompanhar as métricas e seguir as diretrizes documentadas no nosso [Plano de Monitoramento](plano_monitoramento.md) em caso de incidentes ou degradação do modelo (*Data/Model Drift*).
 2.  **Autenticação:** Adicionar uma camada de API Key para proteger os endpoints de predição.
 3.  **Dockerização:** Criar um `Dockerfile` para facilitar o deploy da API em ambientes de nuvem.

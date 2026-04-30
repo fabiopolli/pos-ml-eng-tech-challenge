@@ -66,5 +66,5 @@ Dividimos nossa abordagem em duas frentes para garantir robustez:
 3.  **Foco Financeiro:** Além de AUC-ROC, priorizamos a **Economia Estimada (Savings)**, comparando o custo de perda de churners versus o custo de campanhas de retenção proativa.
 
 ---
-**Documento atualizado em:** 23 de Abril de 2026
+**Documento revisto e validado em:** 30 de Abril de 2026
 **Responsável:** Equipe de ML Eng (Data & Bill)

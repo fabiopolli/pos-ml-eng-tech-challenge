@@ -38,8 +38,8 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 
 ## 📝 5. Etapa 4: Documentação e Entrega
 - [ ] Escrever Model Card (Performance, limitações e vieses).
-- [ ] Elaborar Plano de Monitoramento (Métricas, alertas e playbook).
-- [PARCIAL] Finalizar README.md (Instruções de setup e uso).
+- [x] Elaborar Plano de Monitoramento (Métricas, alertas e playbook).
+- [x] Finalizar README.md (Instruções de setup e uso).
 - [ ] Gravar Vídeo STAR (máximo 5 minutos).
 - [ ] (Bônus) Deploy da API em nuvem (AWS/Azure/GCP) com URL pública.
 
