@@ -37,7 +37,7 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 - [x] Adicionar Middleware de monitoramento de latência na API.
 
 ## 📝 5. Etapa 4: Documentação e Entrega
-- [ ] Escrever Model Card (Performance, limitações e vieses).
+- [x] Escrever Model Card (Performance, limitações e vieses).
 - [x] Elaborar Plano de Monitoramento (Métricas, alertas e playbook).
 - [x] Finalizar README.md (Instruções de setup e uso).
 - [ ] Gravar Vídeo STAR (máximo 5 minutos).
