@@ -14,10 +14,10 @@ Prever a probabilidade de churn de clientes de telecomunicações para suportar 
 Classificação binária: `Churn = 0` (não churn) vs. `Churn = 1` (churn).
 
 ### Responsáveis
-- **Fábio Polli** — Infraestrutura e baselines.
-- **Willian Kopp** — Arquitetura de deep learning.
-- **Romário Silva** — Definição de negócio e EDA.
-- **Denis Barros Melo** — Engenharia de dados e governança.
+- **Fábio Polli** —  RM373870.
+- **Willian Kopp** — RM370703.
+- **Romário Silva** — .
+- **Denis Barros Melo** — RM370416.
 
 ### Data de Criação
 Maio 2026
