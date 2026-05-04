@@ -18,7 +18,8 @@ A organização do projeto segue o padrão *src-layout*, garantindo a separaçã
 .
 ├── data/
 │   ├── raw/                  # Dados originais (imutáveis)
-│   └── processed/            # Dados limpos e transformados
+│   │   └── Telco-Customer-Churn.csv
+│   └── processed/            # Dados limpos e transformados (gerado automaticamente)
 ├── docs/                     # Documentação do projeto e ML Canvas
 ├── models/                   # Modelos persistidos (.pkl, .pth)
 ├── front/                    # Interface de usuário (Frontend)
@@ -57,35 +58,34 @@ cd pos-ml-eng-tech-challenge
 
 ### Passo 2: Criar e Ativar o Ambiente Virtual
 
-**Windows (PowerShell) — setup automático:**
+**Windows (PowerShell) — setup automático (RECOMENDADO):**
 ```powershell
 .\setup.ps1
-.\.venv\Scripts\activate
+.\venv\Scripts\activate
 ```
-> Se receber erro de permissão: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+> **O que `setup.ps1` faz:**
+> - Verifica se Python 3.10+ está instalado
+> - Cria um ambiente virtual em `.venv/`
+> - Instala todas as dependências via `pip`
+> - Garante compatibilidade com Windows
+>
+> **Se receber erro de permissão:** 
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
 
-**Linux/macOS — com `uv` (recomendado):**
+**Linux/macOS — com `uv` (recomendado - mais rápido):**
 ```bash
 uv venv
 source .venv/bin/activate
+uv pip install -e ".[dev]"
 ```
-> ⚠️ **Atenção:** ao usar `uv venv`, instale com `uv pip` (não `pip`). Misturar os dois causa erro no Debian/Ubuntu (PEP 668).
+> ⚠️ **IMPORTANTE:** Ao usar `uv venv`, instale **SEMPRE** com `uv pip` (não com `pip`). Misturar os dois causa erro (PEP 668 no Debian/Ubuntu).
 
-**Linux/macOS — com `venv` padrão:**
+**Linux/macOS — com `venv` padrão (alternativa):**
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-### Passo 3: Instalar Dependências
-
-**Com `uv` (após `uv venv`):**
-```bash
-uv pip install -e ".[dev]"
-```
-
-**Com `pip` padrão:**
-```bash
 pip install --upgrade pip
 pip install -e ".[dev]"
 ```
@@ -163,16 +163,24 @@ Isso criará uma `evaluation_run` com o relatório `evaluation_summary.png` salv
 > 📚 **Dica:** Para um guia passo a passo detalhado, consulte o [Tutorial MLflow](docs/tutorial_mlflow.md).
 
 ### API de Predição (FastAPI)
-```bash
-# Sincronizar ambiente (caso necessário)
-uv sync --all-extras
 
-# Rodar o servidor da API
+**Pré-requisito:** Você deve ter treinado pelo menos um modelo via `python main.py`.
+
+```bash
+# Rodar o servidor da API (porta 8000)
+cd ml-churn-api
+python -m uvicorn app.main:app --reload
+```
+
+**Ou alternativamente (com poetry/uv):**
+```bash
 uv run uvicorn app.main:app --app-dir ml-churn-api --reload
 ```
+
 A API estará disponível em `http://localhost:8000`. 
 - **Documentação Interativa (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Documentação Alternativa (Redoc):** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- **Health Check:** [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
 ---
 
@@ -238,10 +246,27 @@ Ao acessar `/docs`, você verá a interface do Swagger. Para testar:
 ---
 
 ### Dashboard Interativo (Streamlit)
+
+**Pré-requisito:** Você deve ter treinado pelo menos um modelo via `python main.py`.
+
+```bash
+# Rodar o dashboard (abre em http://localhost:8501)
+streamlit run front/app_vis.py
+```
+
+Ou com `uv`:
 ```bash
 uv run streamlit run front/app_vis.py
 ```
-O dashboard agora conta com uma aba exclusiva de **Análise de Custo-Benefício**, permitindo simular o ROI do modelo com base em parâmetros de negócio (Ticket Médio e Custo de Retenção).
+
+**Funcionalidades do Dashboard:**
+- 📊 **EDA Visual:** Exploração interativa dos dados de churn
+- 🤖 **Performance de Modelos:** Comparação entre Baselines e MLP (PyTorch)
+- 💰 **Análise de Custo-Benefício:** Simule o ROI com parâmetros de negócio:
+  - Ticket Médio do cliente
+  - Custo de Retenção
+  - Threshold de confiança do modelo
+- 🎯 **Matriz de Confusão e Métricas:** Detalhes sobre as predições
 
 ---
 
@@ -260,14 +285,21 @@ pytest tests/ ml-churn-api/tests/ -v
 ```
 
 **Gerar Relatórios Visuais (HTML & Coverage):**
+
 ```bash
-# Para utilizadores Linux/macOS:
+# Linux/macOS:
 make qa-report
 
-# Para utilizadores Windows (PowerShell):
-New-Item -ItemType Directory -Force -Path tests\docs; pytest tests/ ml-churn-api/tests/ -v --html=tests/docs/relatorio_qa.html --self-contained-html --cov=src --cov=ml-churn-api/app --cov-report=html:tests/docs/htmlcov
+# Windows (PowerShell):
+make qa-report
+
+# Ou manualmente (todos os SOs):
+pytest tests/ ml-churn-api/tests/ -v --html=tests/docs/relatorio_qa.html --self-contained-html --cov=src --cov=ml-churn-api/app --cov-report=html:tests/docs/htmlcov
 ```
-Os relatórios interativos serão guardados na pasta `tests/docs/`.
+
+Os relatórios interativos serão salvos em `tests/docs/`:
+- `relatorio_qa.html` — Resultado detalhado dos testes
+- `htmlcov/index.html` — Cobertura de código
 
 ### 🤖 Integração Contínua (CI/CD - GitHub Actions)
 O projeto possui uma esteira configurada no **GitHub Actions** (`.github/workflows/ci_pipeline.yml`). 
@@ -360,7 +392,161 @@ Para garantir a saúde do modelo em produção e evitar degradação silenciosa,
 - **Guia da API FastAPI:** Manual de uso da API em `docs/guia_api_fastapi.md`
 - **Tutorial MLflow:** Guia rápido para o time em `docs/tutorial_mlflow.md`
 - **Plano de Monitoramento:** Playbook e métricas do modelo em `docs/plano_monitoramento.md`
-- **FIAP Tech Challenge:** [Link do desafio]
 - **MLflow Docs:** https://mlflow.org/docs/latest/index.html
 - **Scikit-learn:** https://scikit-learn.org/
 - **PyTorch:** https://pytorch.org/docs/stable/index.html
+
+---
+
+## 🔧 Variáveis de Ambiente
+
+O projeto pode ser configurado via variáveis de ambiente. Crie um arquivo `.env` na raiz:
+
+```ini
+# MLflow Tracking
+MLFLOW_TRACKING_URI=http://localhost:5000
+MLFLOW_EXPERIMENT_NAME=churn-prediction
+
+# Processamento de Dados
+RANDOM_STATE=42
+TEST_SIZE=0.2
+
+# API FastAPI
+API_TITLE=Churn Prediction API
+API_VERSION=1.0.0
+API_PORT=8000
+
+# Logging
+LOG_LEVEL=INFO
+```
+
+> ℹ️ **Nota:** Se `.env` não existir, o projeto usa valores padrão sensatos.
+
+---
+
+## ⚠️ Troubleshooting & Problemas Comuns
+
+### 1. **Erro: `ModuleNotFoundError: No module named 'torch'`**
+**Solução:**
+```bash
+# Reinstale as dependências
+pip install --upgrade pip
+pip install -e ".[dev]"
+```
+
+### 2. **Erro: `CUDA not available` (ao rodar MLP com GPU)**
+**Solução:**
+- Se você **não tem GPU**, o PyTorch usa CPU automaticamente ✅
+- Se tem GPU mas quer forçar CPU: configure no `src/models/train_mlp.py`
+```python
+device = torch.device('cpu')  # em vez de 'cuda'
+```
+
+### 3. **Erro ao rodar `setup.ps1`: "cannot be loaded because running scripts is disabled"**
+**Solução:**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\setup.ps1
+```
+
+### 4. **Modelos não são encontrados pela API**
+**Solução:**
+- Verifique se os arquivos estão em `ml-churn-api/Models/`:
+  ```bash
+  ls ml-churn-api/Models/
+  ```
+- Treine novamente: `python main.py`
+- Verifique os caminhos em `ml-churn-api/app/models/model_loader.py`
+
+### 5. **Erro: `PEP 668 - externally managed environment` (Linux/Ubuntu)**
+**Solução:**
+```bash
+# Use uv em vez de pip
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+```
+
+### 6. **Dashboard Streamlit não consegue carregar os dados**
+**Solução:**
+- Certifique-se de que `data/processed/` existe:
+  ```bash
+  python src/preprocessing/data_prep.py
+  ```
+- Verifique se os modelos foram treinados:
+  ```bash
+  python main.py
+  ```
+
+### 7. **Testes falham no CI/CD (GitHub Actions)**
+**Solução:**
+- Verifique se todos os arquivos de modelo estão em `.gitignore` ✅
+- Os testes usam mocks, não arquivos reais
+- Execute localmente: `pytest tests/ ml-churn-api/tests/ -v`
+
+---
+
+## ❓ FAQ
+
+### **P: Qual é a diferença entre `models/` (raiz) e `ml-churn-api/Models/`?**
+**R:** 
+- `models/` — Artefatos do pipeline principal (Scikit-Learn, PyTorch brutos)
+- `ml-churn-api/Models/` — Modelos versionados e prontos para produção na API
+- Ambos são sincronizados após `python main.py`
+
+### **P: Posso usar só CPU e ignorar GPU?**
+**R:** Sim! PyTorch detecta automaticamente e usa CPU se GPU não estiver disponível. Sem problemas.
+
+### **P: Como faço deploy desta aplicação?**
+**R:** Consulte [docs/relatorio_de_implementacao.md](docs/relatorio_de_implementacao.md) para detalhes sobre containerização e deploy em produção (Docker, Kubernetes, Cloud).
+
+### **P: Posso usar outro banco de dados além do CSV?**
+**R:** Sim, modifique o schema em `src/preprocessing/schemas.py` e as funções de load em `src/models/data_utils.py`. O Pandera valida qualquer DataFrame.
+
+### **P: Como autenticar requisições na API?**
+**R:** A API tem suporte a autenticação via middleware em `ml-churn-api/app/middleware/security.py`. Consulte [docs/guia_api_fastapi.md](docs/guia_api_fastapi.md) para configurar API keys ou JWT.
+
+### **P: Qual é o SLA da API?**
+**R:** Latência típica: ~50ms por predição (CPU). Veja métricas no dashboard MLflow em `/artifacts`.
+
+### **P: Posso reentrenar modelos via API?**
+**R:** Não (design atual). Use:
+```bash
+python main.py              # Retrena tudo
+python src/models/evaluate_models.py  # Avalia e registra no MLflow
+```
+
+---
+
+## 📊 Próximos Passos Após Treinar
+
+1. ✅ **Modelos treinados?**
+   ```bash
+   python main.py
+   ```
+
+2. ✅ **Revisar métricas no MLflow UI:**
+   ```bash
+   mlflow ui
+   # Acesse http://localhost:5000
+   ```
+
+3. ✅ **Explorar dados e performance no Dashboard:**
+   ```bash
+   streamlit run front/app_vis.py
+   ```
+
+4. ✅ **Testar predições via API:**
+   ```bash
+   cd ml-churn-api
+   python -m uvicorn app.main:app --reload
+   # Abra http://localhost:8000/docs
+   ```
+
+5. ✅ **Executar testes e gerar relatório:**
+   ```bash
+   pytest tests/ ml-churn-api/tests/ -v
+   ```
+
+6. ✅ **Deploy em produção:**
+   - Leia [docs/relatorio_de_implementacao.md](docs/relatorio_de_implementacao.md)
