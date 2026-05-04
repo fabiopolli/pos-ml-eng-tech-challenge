@@ -13,7 +13,7 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 - [x] Criar um `Makefile` com comandos (`make lint`, `make test`, `make run`).
 
 ## 📊 2. Etapa 1: Entendimento e Preparação (EDA & Baseline)
-- [ ] Preencher ML Canvas (Stakeholders, Métricas, SLOs).
+- [x] Preencher ML Canvas (Stakeholders, Métricas, SLOs).
 - [x] Notebook de EDA: Análise de volume, qualidade e correlação das features.
 - [x] Definir métrica técnica (ex: AUC-ROC) e métrica de negócio (ex: economia de churn).
 - [x] Implementar Baselines com Scikit-Learn (Dummy e Regressão Logística).
@@ -40,8 +40,6 @@ Este checklist serve como guia para garantir que todos os requisitos técnicos e
 - [x] Escrever Model Card (Performance, limitações e vieses).
 - [x] Elaborar Plano de Monitoramento (Métricas, alertas e playbook).
 - [x] Finalizar README.md (Instruções de setup e uso).
-- [ ] Gravar Vídeo STAR (máximo 5 minutos).
-- [ ] (Bônus) Deploy da API em nuvem (AWS/Azure/GCP) com URL pública.
+- [x] Gravar Vídeo STAR (máximo 5 minutos).
 
 ---
-*Gerado pelo seu assistente Python, Data.*
