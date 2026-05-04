@@ -16,7 +16,7 @@ Classificação binária: `Churn = 0` (não churn) vs. `Churn = 1` (churn).
 ### Responsáveis
 - **Fábio Polli** —  RM373870.
 - **Willian Kopp** — RM370703.
-- **Romário Silva** — .
+- **Romário Silva** — RM372243.
 - **Denis Barros Melo** — RM370416.
 
 ### Data de Criação
