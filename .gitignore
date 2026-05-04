@@ -78,3 +78,4 @@ tests/docs/
 test_execution.log
 .pytest_cache/
 htmlcov/
+.coverage
