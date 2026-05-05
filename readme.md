@@ -8,6 +8,9 @@ Este repositório contém o desenvolvimento de um pipeline profissional de Machi
 * **Romário** - Definição de Negócio & EDA
 * **Denis** - Engenharia de Dados (Pipeline Scikit-Learn)
 
+## 🎬 Vídeo de Apresentação (Tech Challenge)
+Assista à apresentação da nossa arquitetura e análise de resultados: [https://drive.google.com/file/d/1lfz2i7Tv2-aq0n923ZdhfhA_Z58PakWs/view?usp=sharing]
+
 ---
 
 ## 📂 Estrutura do Repositório
